@@ -144,4 +144,4 @@ streamlit run app.py
 
 ---
 
-*Built for MCA Minor Project — Intelligent Resume Screening System using NLP and Explainable AI*
+*Built by Prabhmeet Singh — Intelligent Resume Screening System using NLP and Explainable AI*
