@@ -238,7 +238,144 @@ def compute_jd_relevance(resume_text, jd_text, vectorizer):
 
     return {"relevance": relevance, "matched": matched, "missing": missing}
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+
+# ── Skills Taxonomy & Categorization ─────────────────────────────────────────
+SKILL_TAXONOMY = {
+    "Programming Languages": {
+        "python", "java", "javascript", "typescript", "c", "c++", "c#", "ruby",
+        "php", "go", "golang", "rust", "sql", "r", "kotlin", "swift", "html", "css", "bash", "shell"
+    },
+    "Frameworks & Libraries": {
+        "react", "angular", "vue", "django", "flask", "fastapi", "spring", "spring boot",
+        "hibernate", "express", "node", "nodejs", "nextjs", "tensorflow", "pytorch",
+        "scikit", "scikit-learn", "keras", "pandas", "numpy", "scipy", "jquery", "bootstrap",
+        "tailwind", "redux", "graphql", "rest", "rest api"
+    },
+    "Cloud & DevOps": {
+        "aws", "azure", "gcp", "docker", "kubernetes", "jenkins", "terraform",
+        "ci cd", "cicd", "git", "github", "gitlab", "linux", "ansible", "kafka",
+        "airflow", "redis", "rabbitmq", "helm", "devops", "cloud"
+    },
+    "Databases & Data Tools": {
+        "postgresql", "postgres", "mysql", "mongodb", "oracle", "sqlite", "nosql",
+        "cassandra", "elasticsearch", "snowflake", "bigquery", "spark", "pyspark",
+        "hadoop", "tableau", "power bi", "excel", "etl"
+    },
+    "Architecture & Methodologies": {
+        "agile", "scrum", "microservices", "system design", "oop", "tdd", "unit testing",
+        "clean code", "restful", "distributed systems", "mvc"
+    },
+    "Leadership & Soft Skills": {
+        "leadership", "communication", "problem solving", "teamwork", "management",
+        "collaboration", "analytical", "negotiation", "mentoring"
+    }
+}
+
+
+def categorize_keyword(keyword: str) -> str:
+    """Find the best-matching category for a keyword."""
+    clean_k = keyword.lower().strip()
+    for cat, skills in SKILL_TAXONOMY.items():
+        if clean_k in skills:
+            return cat
+        for s in skills:
+            if s in clean_k or clean_k in s:
+                return cat
+    return "General / Technical"
+
+
+def get_categorized_skills(matched_keywords: list, missing_keywords: list) -> dict:
+    """
+    Group matched and missing keywords by taxonomy category.
+    Returns: { category: { 'matched': [...], 'missing': [...] } }
+    """
+    categorized = {}
+    for cat in list(SKILL_TAXONOMY.keys()) + ["General / Technical"]:
+        categorized[cat] = {"matched": [], "missing": []}
+
+    for word, weight in matched_keywords:
+        cat = categorize_keyword(word)
+        categorized[cat]["matched"].append((word, weight))
+
+    for word, weight in missing_keywords:
+        cat = categorize_keyword(word)
+        categorized[cat]["missing"].append((word, weight))
+
+    # Prune empty categories
+    return {k: v for k, v in categorized.items() if v["matched"] or v["missing"]}
+
+
+# ── Semantic Similarity (Hybrid Engine) ──────────────────────────────────────
+_SENTENCE_MODEL = None
+_MODEL_LOADED = False
+
+
+def get_sentence_model():
+    """Lazy-load SentenceTransformer model if available."""
+    global _SENTENCE_MODEL, _MODEL_LOADED
+    if not _MODEL_LOADED:
+        _MODEL_LOADED = True
+        try:
+            from sentence_transformers import SentenceTransformer
+            _SENTENCE_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+            logger.info("Loaded sentence-transformers: all-MiniLM-L6-v2")
+        except Exception as e:
+            logger.info(f"sentence-transformers unavailable ({e}). Using lexical fallback.")
+            _SENTENCE_MODEL = None
+    return _SENTENCE_MODEL
+
+
+def compute_semantic_similarity(resume_text: str, jd_text: str) -> float:
+    """
+    Compute dense semantic cosine similarity between resume and JD.
+    Falls back to token set overlap if model is unavailable.
+    """
+    model = get_sentence_model()
+    if model is not None:
+        try:
+            embeddings = model.encode([resume_text, jd_text], normalize_embeddings=True)
+            sim = float(np.dot(embeddings[0], embeddings[1]))
+            return max(0.0, min(1.0, sim))
+        except Exception as e:
+            logger.warning(f"Embedding computation failed: {e}")
+
+    # Fallback: token set overlap
+    r_words = set(resume_text.lower().split())
+    j_words = set(jd_text.lower().split())
+    if not j_words:
+        return 0.0
+    overlap = len(r_words.intersection(j_words))
+    return float(overlap / len(j_words))
+
+
+def compute_hybrid_relevance(
+    resume_text: str,
+    jd_text: str,
+    vectorizer: TfidfVectorizer,
+    lexical_weight: float = 0.5,
+    semantic_weight: float = 0.5,
+) -> dict:
+    """
+    Hybrid relevance combining weighted TF-IDF (lexical coverage)
+    and dense semantic similarity.
+    """
+    lexical_res = compute_jd_relevance(resume_text, jd_text, vectorizer)
+    semantic_sim = compute_semantic_similarity(resume_text, jd_text)
+
+    hybrid_score = (lexical_weight * lexical_res["relevance"]) + (semantic_weight * semantic_sim)
+    hybrid_score = max(0.0, min(1.0, hybrid_score))
+
+    categorized = get_categorized_skills(lexical_res["matched"], lexical_res["missing"])
+
+    return {
+        "relevance": hybrid_score,
+        "lexical_relevance": lexical_res["relevance"],
+        "semantic_similarity": semantic_sim,
+        "matched": lexical_res["matched"],
+        "missing": lexical_res["missing"],
+        "categorized_skills": categorized,
+    }
+
 def run_feature_extraction(
     data_dir: str = "data",
     models_dir: str = "models",
