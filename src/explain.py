@@ -113,18 +113,11 @@ def get_shap_explainer(model, X_train_sample=None):
             logger.warning(f"TreeExplainer unavailable: {e}")
             return None
 
-    # Try native SHAP first
-    if X_train_sample is not None:
-        try:
-            import shap
-            explainer = shap.LinearExplainer(
-                model, X_train_sample,
-                feature_perturbation="interventional"
-            )
-            logger.info("Using shap.LinearExplainer (native)")
-            return explainer
-        except Exception as e:
-            logger.warning(f"shap.LinearExplainer unavailable ({e}). Using pure-Python LinearSHAP.")
+    # NOTE: native shap.LinearExplainer is intentionally disabled -- for
+    # multiclass models it returns shap values in a shape our code doesn't
+    # reliably handle, crashing downstream. Our pure-Python LinearSHAP below
+    # is mathematically equivalent and has been reliable in testing, so we
+    # always use it instead.
 
     # Fallback: our custom pure-Python implementation
     background = X_train_sample if X_train_sample is not None else np.zeros((1, model.coef_.shape[1]))
@@ -369,6 +362,7 @@ def explain_resume(
         )
         from train_model import compute_fit_score
         from narrative import generate_narrative
+        from skills import extract_skill_gaps
     except ImportError:
         from src.feature_extraction import (
             transform_single_text,
@@ -377,6 +371,7 @@ def explain_resume(
         )
         from src.train_model import compute_fit_score
         from src.narrative import generate_narrative
+        from src.skills import extract_skill_gaps
 
     # 1. Vectorize
     resume_vec = transform_single_text(resume_text, vectorizer)
@@ -459,6 +454,7 @@ def explain_resume(
         "waterfall_figure": waterfall_fig,
         "narrative": narrative,
         "shap_error": shap_error,
+        "skill_gaps": extract_skill_gaps(resume_text, jd_text),
     }
 
 

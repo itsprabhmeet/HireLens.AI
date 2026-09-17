@@ -45,7 +45,7 @@ def get_logistic_regression() -> LogisticRegression:
         C=5.0,               # Regularization strength (lower = stronger reg)
         max_iter=1000,
         solver="lbfgs",      # handles multi-class natively in sklearn >= 1.5
-        n_jobs=-1,
+        class_weight="balanced",  # counteracts categories with few training examples
         random_state=42,
     )
 

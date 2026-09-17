@@ -155,6 +155,30 @@ st.markdown(
         font-weight: 500;
     }
 
+    .skill-chip-missing {
+        display: inline-block;
+        background: rgba(251, 191, 36, 0.1);
+        border: 1px solid rgba(251, 191, 36, 0.3);
+        color: #fbbf24;
+        border-radius: 8px;
+        padding: 5px 14px;
+        margin: 4px 5px 4px 0;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .skill-chip-present {
+        display: inline-block;
+        background: rgba(74, 222, 128, 0.08);
+        border: 1px solid rgba(74, 222, 128, 0.22);
+        color: rgba(74, 222, 128, 0.75);
+        border-radius: 8px;
+        padding: 5px 14px;
+        margin: 4px 5px 4px 0;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
     .stProgress > div > div > div > div {
         background: linear-gradient(90deg, #818cf8, #a78bfa);
         border-radius: 10px;
@@ -441,6 +465,39 @@ def main():
     )
 
     st.markdown('<div class="section-header">Job Description</div>', unsafe_allow_html=True)
+
+    jd_source = st.radio(
+        "How would you like to provide the job description?",
+        ["Paste Text", "Paste Job Link"],
+        key="jd_source",
+        horizontal=True,
+    )
+
+    if jd_source == "Paste Job Link":
+        link_col, btn_col = st.columns([4, 1])
+        with link_col:
+            jd_url = st.text_input(
+                "Job posting URL",
+                label_visibility="collapsed",
+                placeholder="https://...",
+                key="jd_url_input",
+            )
+        with btn_col:
+            fetch_clicked = st.button("Fetch", key="fetch_jd_btn")
+
+        if fetch_clicked:
+            if not jd_url.strip():
+                st.warning("Paste a job posting URL first.")
+            else:
+                with st.spinner("Fetching job description..."):
+                    from job_fetcher import fetch_job_description_from_url
+                    fetch_result = fetch_job_description_from_url(jd_url)
+                if fetch_result["success"]:
+                    st.session_state["jd_input"] = fetch_result["text"]
+                    st.success(fetch_result["message"])
+                else:
+                    st.warning(fetch_result["message"])
+
     jd_text = st.text_area(
         label="Job Description",
         label_visibility="collapsed",
@@ -567,6 +624,32 @@ def main():
         narrative_html += "</div>"
         st.markdown(narrative_html, unsafe_allow_html=True)
 
+        # -- Skills to Build -- curated, text-matched (independent of the
+        # classifier's TF-IDF vocabulary), directly actionable ----------------
+        skill_gaps = result.get("skill_gaps", {})
+        missing_skills = skill_gaps.get("missing_skills", [])
+        present_skills = skill_gaps.get("present_skills", [])
+
+        if missing_skills or present_skills:
+            st.markdown('<div class="section-header">Skills to Build</div>', unsafe_allow_html=True)
+            skills_html = '<div class="card">'
+            if missing_skills:
+                skills_html += (
+                    '<span class="narrative-label label-gaps">Not yet on the resume</span>'
+                    '<div style="margin-top:10px;">'
+                    + " ".join(f'<span class="skill-chip-missing">{s}</span>' for s in missing_skills)
+                    + "</div>"
+                )
+            if present_skills:
+                skills_html += (
+                    '<span class="narrative-label label-strengths" style="margin-top:18px;">Already covered</span>'
+                    '<div style="margin-top:10px;">'
+                    + " ".join(f'<span class="skill-chip-present">{s}</span>' for s in present_skills)
+                    + "</div>"
+                )
+            skills_html += "</div>"
+            st.markdown(skills_html, unsafe_allow_html=True)
+
         # -- Evidence, in tabs, secondary to the narrative --------------------
         st.markdown('<div class="section-header">Evidence</div>', unsafe_allow_html=True)
         tab1, tab2, tab3 = st.tabs(["Keywords", "SHAP Explanation", "Category Probabilities"])
@@ -686,7 +769,7 @@ def main():
             with col:
                 st.markdown(
                     f"""
-                    <div class="card" style="padding:18px;text-align:center;">
+                    <div class="card" style="padding:18px;text-align:center;min-height:132px;display:flex;flex-direction:column;justify-content:center;">
                         <div style="font-size:1.4rem;font-weight:700;color:#818cf8;margin-bottom:6px;">{num}</div>
                         <div style="font-weight:600;color:rgba(255,255,255,0.85);font-size:0.9rem;">{title}</div>
                         <div style="color:rgba(255,255,255,0.4);font-size:0.77rem;margin-top:4px;">{desc}</div>
