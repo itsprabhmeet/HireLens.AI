@@ -51,17 +51,18 @@ class LinearSHAP:
 
         # Compute per-feature mean over background (E[X_j])
         if hasattr(background_data, "toarray"):
-            bg_dense = background_data.toarray()
+            bg_dense = np.asarray(background_data.toarray())
         else:
-            bg_dense = np.array(background_data)
-        self.feature_means = bg_dense.mean(axis=0)  # shape: (n_features,)
+            bg_dense = np.asarray(background_data)
+        self.feature_means = np.nan_to_num(np.mean(bg_dense, axis=0).flatten(), nan=0.0, posinf=0.0, neginf=0.0)
 
         # Expected value per class = model output on background mean
         bg_mean_vec = self.feature_means.reshape(1, -1)
-        log_odds = bg_mean_vec @ self.coef.T + self.intercept  # (1, n_classes)
+        raw_logits = np.dot(bg_mean_vec, self.coef.T) + self.intercept
+        log_odds = np.clip(np.nan_to_num(raw_logits, nan=0.0), -50.0, 50.0)
         # Softmax to get probability
-        exp_lo = np.exp(log_odds - log_odds.max())
-        proba_bg = (exp_lo / exp_lo.sum())[0]
+        exp_lo = np.exp(log_odds - np.max(log_odds))
+        proba_bg = (exp_lo / np.sum(exp_lo)).flatten()
         self.expected_value = proba_bg.tolist()  # list, one per class
 
     def shap_values(self, X):
@@ -104,11 +105,14 @@ def get_shap_explainer(model, X_train_sample=None):
     """
     from sklearn.linear_model import LogisticRegression
 
+    import importlib.util
+
     if not isinstance(model, LogisticRegression):
         # For tree models, try SHAP TreeExplainer
         try:
-            import shap
-            return shap.TreeExplainer(model)
+            if importlib.util.find_spec("shap") is not None:
+                shap_mod = importlib.import_module("shap")
+                return shap_mod.TreeExplainer(model)
         except Exception as e:
             logger.warning(f"TreeExplainer unavailable: {e}")
             return None
@@ -358,7 +362,7 @@ def explain_resume(
         from feature_extraction import (
             transform_single_text,
             compute_jd_resume_similarity,
-            compute_jd_relevance,
+            compute_hybrid_relevance,
         )
         from train_model import compute_fit_score
         from narrative import generate_narrative
@@ -367,7 +371,7 @@ def explain_resume(
         from src.feature_extraction import (
             transform_single_text,
             compute_jd_resume_similarity,
-            compute_jd_relevance,
+            compute_hybrid_relevance,
         )
         from src.train_model import compute_fit_score
         from src.narrative import generate_narrative
@@ -382,26 +386,27 @@ def explain_resume(
     pred_proba = model.predict_proba(resume_vec)[0]
     predicted_category = label_encoder.inverse_transform([pred_label])[0]
 
-       # 3. Cosine similarity — kept as a supporting stat, no longer drives the fit score
+    # 3. Cosine similarity
     cosine_sim = compute_jd_resume_similarity(resume_text, jd_text, vectorizer)
 
-    # 4. Weighted JD relevance (replaces flat keyword counting)
-    relevance_result = compute_jd_relevance(resume_text, jd_text, vectorizer)
+    # 4. Hybrid JD relevance (combining TF-IDF coverage + Semantic similarity)
+    hybrid_result = compute_hybrid_relevance(resume_text, jd_text, vectorizer)
 
-    # 5. Fit score — now genuinely measures JD fit, not category-classification confidence
+    # 5. Fit score — combines Hybrid Relevance and Category Alignment
     fit_score, category_alignment = compute_fit_score(
         model, resume_vec, jd_vec,
-        jd_relevance=relevance_result["relevance"],
+        jd_relevance=hybrid_result["relevance"],
         resume_pred_label=pred_label,
     )
 
-    # 6. Keyword matching, weighted by JD importance
+    # 6. Keyword matching & Categorized Skills
     keyword_match = {
-        "matched": relevance_result["matched"][:20],
-        "missing": relevance_result["missing"][:20],
+        "matched": hybrid_result["matched"][:20],
+        "missing": hybrid_result["missing"][:20],
     }
+    categorized_skills = hybrid_result.get("categorized_skills", {})
 
-    # 6. SHAP explanation
+    # 7. SHAP explanation
     feature_names = np.array(vectorizer.get_feature_names_out())
     shap_features = {"positive": [], "negative": []}
     shap_fig = None
@@ -427,7 +432,7 @@ def explain_resume(
 
     narrative_input = {
         "fit_score": fit_score,
-        "jd_relevance": round(relevance_result["relevance"] * 100, 1),
+        "jd_relevance": round(hybrid_result["relevance"] * 100, 1),
         "category_alignment": round(category_alignment * 100, 1),
         "predicted_category": predicted_category,
         "matched_keywords": keyword_match.get("matched", []),
@@ -439,7 +444,9 @@ def explain_resume(
     return {
         "predicted_category": predicted_category,
         "fit_score": fit_score,
-        "jd_relevance": round(relevance_result["relevance"] * 100, 1),
+        "jd_relevance": round(hybrid_result["relevance"] * 100, 1),
+        "lexical_relevance": round(hybrid_result.get("lexical_relevance", 0.0) * 100, 1),
+        "semantic_similarity": round(hybrid_result.get("semantic_similarity", 0.0) * 100, 1),
         "category_alignment": round(category_alignment * 100, 1),
         "cosine_similarity": round(cosine_sim * 100, 1),
         "confidence": round(float(pred_proba.max()) * 100, 1),
@@ -449,6 +456,7 @@ def explain_resume(
         },
         "matched_keywords": keyword_match.get("matched", []),
         "missing_keywords": keyword_match.get("missing", []),
+        "categorized_skills": categorized_skills,
         "shap_features": shap_features,
         "shap_figure": shap_fig,
         "waterfall_figure": waterfall_fig,
@@ -456,6 +464,7 @@ def explain_resume(
         "shap_error": shap_error,
         "skill_gaps": extract_skill_gaps(resume_text, jd_text),
     }
+
 
 
 # ── Demo / Test ───────────────────────────────────────────────────────────────

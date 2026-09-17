@@ -14,9 +14,29 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-import nltk
 import joblib
 import logging
+
+try:
+    import nltk
+except ImportError:
+    nltk = None
+
+DEFAULT_STOPWORDS = {
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and",
+    "any", "are", "as", "at", "be", "because", "been", "before", "being", "below",
+    "between", "both", "but", "by", "can", "did", "do", "does", "doing", "don",
+    "down", "during", "each", "few", "for", "from", "further", "had", "has", "have",
+    "having", "he", "her", "here", "hers", "herself", "him", "himself", "his", "how",
+    "i", "if", "in", "into", "is", "it", "its", "itself", "just", "me", "more", "most",
+    "my", "myself", "no", "nor", "not", "now", "of", "off", "on", "once", "only", "or",
+    "other", "our", "ours", "ourselves", "out", "over", "own", "s", "same", "she",
+    "should", "so", "some", "such", "t", "than", "that", "the", "their", "theirs",
+    "them", "themselves", "then", "there", "these", "they", "this", "those", "through",
+    "to", "too", "under", "until", "up", "very", "was", "we", "were", "what", "when",
+    "where", "which", "while", "who", "whom", "why", "will", "with", "you", "your",
+    "yours", "yourself", "yourselves"
+}
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -28,6 +48,9 @@ logger = logging.getLogger(__name__)
 # ── NLTK downloads ────────────────────────────────────────────────────────────
 def download_nltk_resources():
     """Download required NLTK data (runs once)."""
+    if nltk is None:
+        logger.info("NLTK not installed; using built-in stopwords.")
+        return
     resources = ["stopwords", "punkt", "wordnet"]
     for resource in resources:
         try:
@@ -66,13 +89,79 @@ def clean_resume_text(text: str) -> str:
     try:
         from nltk.corpus import stopwords
         stop_words = set(stopwords.words("english"))
-        tokens = text.split()
-        tokens = [t for t in tokens if t not in stop_words and len(t) > 1]
-        text = " ".join(tokens)
     except Exception:
-        pass  # If NLTK fails, return text without stopword removal
+        stop_words = DEFAULT_STOPWORDS
+    tokens = text.split()
+    tokens = [t for t in tokens if t not in stop_words and len(t) > 1]
+    text = " ".join(tokens)
 
     return text
+
+
+# ── PII Redaction / Blind Screening ──────────────────────────────────────────
+def anonymize_resume_text(text: str) -> dict:
+    """
+    Redact personally identifiable information (PII) for blind screening:
+    - Emails
+    - Phone numbers
+    - Profile links (LinkedIn, GitHub, Portfolio)
+    - Name heuristics (e.g. Header line or 'Name: ...')
+
+    Returns:
+    --------
+    dict with:
+        'anonymized_text': str
+        'redaction_counts': dict (counts of emails, phones, links redacted)
+    """
+    if not isinstance(text, str) or not text.strip():
+        return {"anonymized_text": "", "redaction_counts": {"emails": 0, "phones": 0, "links": 0, "names": 0}}
+
+    redacted = text
+    counts = {"emails": 0, "phones": 0, "links": 0, "names": 0}
+
+    # 1. Emails
+    email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+    emails_found = re.findall(email_pattern, redacted)
+    counts["emails"] = len(emails_found)
+    redacted = re.sub(email_pattern, "[EMAIL REDACTED]", redacted)
+
+    # 2. Phone numbers (various international and domestic formats)
+    phone_pattern = r"(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b\d{10}\b"
+    phones_found = re.findall(phone_pattern, redacted)
+    counts["phones"] = len(phones_found)
+    redacted = re.sub(phone_pattern, "[PHONE REDACTED]", redacted)
+
+    # 3. URLs, LinkedIn, GitHub profiles
+    link_pattern = r"(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com\/in\/|github\.com\/)[A-Za-z0-9_-]+"
+    links_found = re.findall(link_pattern, redacted, flags=re.IGNORECASE)
+    counts["links"] = len(links_found)
+    redacted = re.sub(link_pattern, "[PROFILE REDACTED]", redacted, flags=re.IGNORECASE)
+
+    # Generic URLs
+    url_pattern = r"https?:\/\/\S+|www\.\S+"
+    generic_urls = re.findall(url_pattern, redacted)
+    counts["links"] += len(generic_urls)
+    redacted = re.sub(url_pattern, "[LINK REDACTED]", redacted)
+
+    # 4. Name heuristic (e.g. "Name: John Doe" or first non-empty line if short)
+    name_label_pattern = r"(?i)(name\s*:\s*)([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)"
+    redacted = re.sub(name_label_pattern, r"\1[CANDIDATE NAME REDACTED]", redacted)
+
+    lines = redacted.split("\n")
+    for i, line in enumerate(lines[:3]):
+        stripped = line.strip()
+        # If the first non-empty line looks like a candidate name (2-4 words, capitalized, no punctuation, short)
+        if stripped and len(stripped.split()) in [2, 3, 4] and not any(char in stripped for char in [":", "@", "/", "\\", "|", "{", "}"]):
+            if all(word[0].isupper() for word in stripped.split() if word.isalpha()):
+                lines[i] = "[CANDIDATE NAME REDACTED]"
+                counts["names"] += 1
+                break
+    redacted = "\n".join(lines)
+
+    return {
+        "anonymized_text": redacted,
+        "redaction_counts": counts,
+    }
 
 
 # ── Synthetic Dataset Generator ───────────────────────────────────────────────

@@ -271,6 +271,110 @@ def _build_suggestions(missing_keywords: list, top_n: int = 3) -> str:
 # ============================================================================
 # Public entry point
 # ============================================================================
+
+# -- Interview Question Generator --------------------------------------------
+_QUESTION_BANK = {
+    "cloud": (
+        "Cloud & Infrastructure",
+        "Could you describe your hands-on experience with cloud providers (AWS/GCP/Azure) and automated CI/CD deployment pipelines?"
+    ),
+    "docker": (
+        "Containerization",
+        "How have you used Docker or container orchestration tools to ensure application reproducibility across environments?"
+    ),
+    "kubernetes": (
+        "Kubernetes & Orchestration",
+        "Can you walk us through how you manage cluster deployments, ingress, and auto-scaling in a Kubernetes environment?"
+    ),
+    "sql": (
+        "Database Architecture",
+        "Can you discuss a time you optimized a slow query or designed an efficient schema for a relational or NoSQL database?"
+    ),
+    "nosql": (
+        "NoSQL Data Stores",
+        "When would you choose a document or key-value store over a traditional SQL database, and what trade-offs did you encounter?"
+    ),
+    "microservices": (
+        "System Design",
+        "How do you approach inter-service communication, distributed tracing, and fault-tolerance when designing microservices?"
+    ),
+    "api": (
+        "API Design & Integration",
+        "What principles do you adhere to when building secure, scalable RESTful or GraphQL APIs for third-party consumption?"
+    ),
+    "machine learning": (
+        "ML Engineering",
+        "How do you handle feature engineering, model drift monitoring, and hyperparameter tuning in production ML pipelines?"
+    ),
+    "nlp": (
+        "Natural Language Processing",
+        "Which text representation and tokenization techniques or transformer architectures have you implemented for NLP tasks?"
+    ),
+    "react": (
+        "Frontend State Management",
+        "How do you manage complex application state and minimize unnecessary re-renders in modern component-based frontends?"
+    ),
+    "testing": (
+        "Testing & Quality Assurance",
+        "What is your strategy for unit, integration, and end-to-end test coverage to ensure regression-free releases?"
+    ),
+    "security": (
+        "Application Security",
+        "What measures do you take to safeguard applications against common vulnerabilities (e.g. OWASP Top 10, auth validation)?"
+    ),
+    "agile": (
+        "Agile Delivery",
+        "How do you manage sprint planning, technical debt prioritization, and cross-functional stakeholder communication?"
+    ),
+}
+
+
+def generate_interview_questions(missing_keywords: list, max_questions: int = 4) -> list:
+    """
+    Generate tailored technical interview questions based on missing JD keywords.
+    Helps recruiters probe candidate capabilities during screening interviews.
+
+    Returns:
+    --------
+    list of dict: [{"skill": str, "category": str, "question": str}, ...]
+    """
+    questions = []
+    used_topics = set()
+
+    for word, _ in missing_keywords:
+        w_clean = _clean_word(word).lower()
+
+        for trigger, (category, q_text) in _QUESTION_BANK.items():
+            if trigger in w_clean or w_clean in trigger:
+                if category not in used_topics:
+                    questions.append({
+                        "skill": word,
+                        "category": category,
+                        "question": q_text,
+                    })
+                    used_topics.add(category)
+                break
+
+        if len(questions) >= max_questions:
+            break
+
+    if len(questions) < max_questions:
+        for word, _ in missing_keywords:
+            w_clean = _clean_word(word)
+
+            if not any(q["skill"].lower() == word.lower() for q in questions):
+                questions.append({
+                    "skill": word,
+                    "category": f"Competency: {w_clean.title()}",
+                    "question": (
+                        f"The job requirement highlights '{w_clean}'. "
+                        f"Can you discuss any past exposure, transferable skills, "
+                        f"or how quickly you could get up to speed with this?"
+                    ),
+                })
+
+            if len(questions) >= max_questions:
+                break
 def generate_narrative(result: dict, resume_text: str = "") -> dict:
     """
     Build the full human-style, job-readiness-focused write-up from an
@@ -283,7 +387,7 @@ def generate_narrative(result: dict, resume_text: str = "") -> dict:
 
     Returns
     -------
-    dict with keys: verdict, strengths, gaps, suggestions
+    dict with keys: verdict, strengths, gaps, suggestions, interview_questions
     """
     seed_text = resume_text or result.get("predicted_category", "seed")
 
@@ -298,12 +402,14 @@ def generate_narrative(result: dict, resume_text: str = "") -> dict:
     strengths = _build_strengths(matched, shap_positive, fit_score, seed_text)
     gaps = _build_gaps(missing, seed_text)
     suggestions = _build_suggestions(missing)
+    interview_questions = generate_interview_questions(missing)
 
     return {
         "verdict": verdict,
         "strengths": strengths,
         "gaps": gaps,
         "suggestions": suggestions,
+        "interview_questions": interview_questions,
     }
 
 
