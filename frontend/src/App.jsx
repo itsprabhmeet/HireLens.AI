@@ -409,6 +409,9 @@ export default function App() {
             <p className="footer-copyright">
               Enterprise-Grade Explainable Talent Intelligence Platform • Production Ready
             </p>
+            <p className="footer-copyright">
+              Made by Prabhmeet Singh
+            </p>
           </div>
           <div className="footer-tech-stack">
             <span className="tech-badge">FastAPI</span>
