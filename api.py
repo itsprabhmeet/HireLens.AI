@@ -15,6 +15,11 @@ import joblib
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from dotenv import load_dotenv
+import requests
+
+load_dotenv()
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 # Add workspace and src to path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -205,6 +210,7 @@ def format_evaluation_payload(result: dict, display_name: str, filename: str, te
         "matched_count": len(matched_kws),
         "missing_count": len(missing_kws),
         "categorized_skills": clean_cats,
+        "skill_gaps": result.get("skill_gaps", {"missing_skills": [], "present_skills": []}),
         "shap_features": shap_dict,
         "narrative": clean_narrative,
         "blind_mode": blind_mode,
@@ -233,6 +239,17 @@ def get_system_status():
         "categories": [],
         "total_categories": 0,
     }
+
+
+class JobUrlRequest(BaseModel):
+    url: str
+
+
+@app.post("/api/fetch-job-url")
+def fetch_job_description_url(payload: JobUrlRequest):
+    """Best-effort extraction of a job description from a URL (reuses job_fetcher.py)."""
+    from src.job_fetcher import fetch_job_description_from_url
+    return fetch_job_description_from_url(payload.url)
 
 
 @app.post("/api/screen")
@@ -370,6 +387,75 @@ async def screen_batch_resumes(
         "total_screened": len(evaluations),
         "candidates": evaluations,
     }
+
+
+def fetch_youtube_tutorials(skill: str, max_results: int = 6) -> list:
+    """
+    Fetch top YouTube tutorial videos for a skill, sorted by view count.
+    Requires YOUTUBE_API_KEY in a local .env file (see README).
+    """
+    if not YOUTUBE_API_KEY:
+        logger.warning("YOUTUBE_API_KEY not set -- returning no tutorials.")
+        return []
+
+    try:
+        search_resp = requests.get(
+            "https://www.googleapis.com/youtube/v3/search",
+            params={
+                "part": "snippet",
+                "q": f"{skill} tutorial",
+                "type": "video",
+                "maxResults": 10,
+                "order": "viewCount",
+                "relevanceLanguage": "en",
+                "safeSearch": "strict",
+                "key": YOUTUBE_API_KEY,
+            },
+            timeout=8,
+        )
+        search_resp.raise_for_status()
+        items = search_resp.json().get("items", [])
+    except Exception as e:
+        logger.warning(f"YouTube search failed for '{skill}': {e}")
+        return []
+
+    video_ids = [item["id"]["videoId"] for item in items if item.get("id", {}).get("videoId")]
+    if not video_ids:
+        return []
+
+    try:
+        stats_resp = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={"part": "statistics,snippet", "id": ",".join(video_ids), "key": YOUTUBE_API_KEY},
+            timeout=8,
+        )
+        stats_resp.raise_for_status()
+        stats_items = stats_resp.json().get("items", [])
+    except Exception as e:
+        logger.warning(f"YouTube stats fetch failed for '{skill}': {e}")
+        return []
+
+    videos = []
+    for item in stats_items:
+        snippet = item.get("snippet", {})
+        stats = item.get("statistics", {})
+        videos.append({
+            "video_id": item.get("id"),
+            "title": snippet.get("title", ""),
+            "channel": snippet.get("channelTitle", ""),
+            "thumbnail": snippet.get("thumbnails", {}).get("medium", {}).get("url", ""),
+            "view_count": int(stats.get("viewCount", 0)),
+            "url": f"https://www.youtube.com/watch?v={item.get('id')}",
+        })
+
+    videos.sort(key=lambda v: v["view_count"], reverse=True)
+    return videos[:max_results]
+
+
+@app.get("/api/youtube-tutorials")
+def get_youtube_tutorials(skill: str):
+    """Get top YouTube tutorial videos for a given skill name."""
+    return {"skill": skill, "videos": fetch_youtube_tutorials(skill)}
 
 
 @app.post("/api/train")

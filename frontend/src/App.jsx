@@ -18,6 +18,7 @@ import ResumeUpload from './components/ResumeUpload';
 import ScoreGauge from './components/ScoreGauge';
 import NarrativeCard from './components/NarrativeCard';
 import SkillsMatrix from './components/SkillsMatrix';
+import LearningRecommendations from './components/LearningRecommendations';
 import ShapVisualizer from './components/ShapVisualizer';
 import InterviewQuestionsCard from './components/InterviewQuestionsCard';
 import LeaderboardTable from './components/LeaderboardTable';
@@ -354,6 +355,9 @@ export default function App() {
               matchedKeywords={evalResult.matched_keywords}
               missingKeywords={evalResult.missing_keywords}
             />
+
+            {/* Vocabulary-independent skill gaps + YouTube tutorial recommendations */}
+            <LearningRecommendations skillGaps={evalResult.skill_gaps} />
 
             {/* Targeted Interview Probes Card */}
             {evalResult.narrative && evalResult.narrative.interview_questions && (
