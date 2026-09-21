@@ -414,7 +414,7 @@ def fetch_youtube_tutorials(skill: str, job_role: str = "", max_results: int = 6
                 "q": query,
                 "type": "video",
                 "maxResults": 10,
-                "order": "viewCount",
+                "order": "relevance",
                 "videoDuration": "medium",
                 "relevanceLanguage": "en",
                 "safeSearch": "strict",
