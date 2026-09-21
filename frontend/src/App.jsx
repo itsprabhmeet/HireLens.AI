@@ -357,7 +357,7 @@ export default function App() {
             />
 
             {/* Vocabulary-independent skill gaps + YouTube tutorial recommendations */}
-            <LearningRecommendations skillGaps={evalResult.skill_gaps} />
+            <LearningRecommendations skillGaps={evalResult.skill_gaps} jobRole={evalResult.predicted_category} />
 
             {/* Targeted Interview Probes Card */}
             {evalResult.narrative && evalResult.narrative.interview_questions && (

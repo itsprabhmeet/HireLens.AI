@@ -7,7 +7,7 @@ function formatViewCount(n) {
   return `${n} views`;
 }
 
-export default function LearningRecommendations({ skillGaps = {} }) {
+export default function LearningRecommendations({ skillGaps = {}, jobRole = '' }) {
   const missingSkills = skillGaps.missing_skills || [];
   const presentSkills = skillGaps.present_skills || [];
 
@@ -28,7 +28,7 @@ export default function LearningRecommendations({ skillGaps = {} }) {
     setError(null);
     setLoading(true);
     try {
-      const response = await fetch(`/api/youtube-tutorials?skill=${encodeURIComponent(skill)}`);
+      const response = await fetch(`/api/youtube-tutorials?skill=${encodeURIComponent(skill)}&job_role=${encodeURIComponent(jobRole)}`);
       const data = await response.json();
       if (data.videos && data.videos.length > 0) {
         setVideos(data.videos);

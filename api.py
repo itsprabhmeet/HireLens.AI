@@ -389,24 +389,33 @@ async def screen_batch_resumes(
     }
 
 
-def fetch_youtube_tutorials(skill: str, max_results: int = 6) -> list:
+def fetch_youtube_tutorials(skill: str, job_role: str = "", max_results: int = 6) -> list:
     """
     Fetch top YouTube tutorial videos for a skill, sorted by view count.
     Requires YOUTUBE_API_KEY in a local .env file (see README).
+
+    Query is role-aware ("{skill} course for {job_role}") rather than a bare
+    "{skill} tutorial" -- the latter tends to surface generic consumer
+    content (e.g. "Networking" pulling WiFi-password videos). videoDuration
+    is restricted to medium/long to exclude YouTube Shorts entirely, since
+    short-form video is never a real course regardless of view count.
     """
     if not YOUTUBE_API_KEY:
         logger.warning("YOUTUBE_API_KEY not set -- returning no tutorials.")
         return []
+
+    query = f"{skill} course for {job_role}" if job_role else f"{skill} course"
 
     try:
         search_resp = requests.get(
             "https://www.googleapis.com/youtube/v3/search",
             params={
                 "part": "snippet",
-                "q": f"{skill} tutorial",
+                "q": query,
                 "type": "video",
                 "maxResults": 10,
                 "order": "viewCount",
+                "videoDuration": "medium",
                 "relevanceLanguage": "en",
                 "safeSearch": "strict",
                 "key": YOUTUBE_API_KEY,
@@ -453,9 +462,9 @@ def fetch_youtube_tutorials(skill: str, max_results: int = 6) -> list:
 
 
 @app.get("/api/youtube-tutorials")
-def get_youtube_tutorials(skill: str):
-    """Get top YouTube tutorial videos for a given skill name."""
-    return {"skill": skill, "videos": fetch_youtube_tutorials(skill)}
+def get_youtube_tutorials(skill: str, job_role: str = ""):
+    """Get top YouTube tutorial videos for a given skill name, tailored to a job role."""
+    return {"skill": skill, "videos": fetch_youtube_tutorials(skill, job_role)}
 
 
 @app.post("/api/train")
