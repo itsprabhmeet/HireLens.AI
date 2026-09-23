@@ -1,15 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Trophy,
   Search,
   Download,
   Eye,
-  SlidersHorizontal,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
   AlertCircle,
-  Sparkles,
 } from 'lucide-react';
 
 export default function LeaderboardTable({
@@ -100,13 +97,10 @@ export default function LeaderboardTable({
     <div className="glass-panel leaderboard-card">
       <div className="section-header leaderboard-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            <Trophy size={18} className="text-warning" />
-          </div>
           <div>
-            <h2 className="section-title">Candidate Ranking Leaderboard</h2>
+            <h2 className="section-title">Ranking</h2>
             <p className="section-subtitle">
-              Screened and benchmarked against target JD using hybrid neural & statistical scoring
+              Candidates ranked against the job description
             </p>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GraduationCap, PlayCircle, ExternalLink, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { PlayCircle, ExternalLink, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 function formatViewCount(n) {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M views`;
@@ -50,11 +50,8 @@ export default function LearningRecommendations({ skillGaps = {}, jobRole = '' }
     <div className="glass-panel narrative-card">
       <div className="section-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            <GraduationCap size={18} className="text-cyan" />
-          </div>
           <div>
-            <h2 className="section-title">Skills to Build</h2>
+            <h2 className="section-title">Skills to build</h2>
             <p className="section-subtitle">
               Curated, vocabulary-independent skill matching -- click a skill to see top tutorials
             </p>
@@ -76,9 +73,9 @@ export default function LearningRecommendations({ skillGaps = {}, jobRole = '' }
                 onClick={() => handleSelectSkill(skill)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '6px',
-                  background: selectedSkill === skill ? 'rgba(251, 191, 36, 0.22)' : 'rgba(251, 191, 36, 0.1)',
-                  border: '1px solid rgba(251, 191, 36, 0.35)',
-                  color: '#fbbf24', borderRadius: '8px', padding: '6px 14px',
+                  background: selectedSkill === skill ? 'var(--color-warning-border)' : 'var(--color-warning-bg)',
+                  border: '1px solid var(--color-warning-border)',
+                  color: 'var(--color-warning)', borderRadius: '7px', padding: '6px 14px',
                   fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer',
                 }}
               >
@@ -101,8 +98,8 @@ export default function LearningRecommendations({ skillGaps = {}, jobRole = '' }
               <span
                 key={skill}
                 style={{
-                  background: 'rgba(74, 222, 128, 0.08)', border: '1px solid rgba(74, 222, 128, 0.22)',
-                  color: 'rgba(74, 222, 128, 0.75)', borderRadius: '8px', padding: '5px 14px',
+                  background: 'var(--color-success-bg)', border: '1px solid var(--color-success-border)',
+                  color: 'var(--color-success)', borderRadius: '7px', padding: '5px 14px',
                   fontSize: '0.85rem', fontWeight: 500,
                 }}
               >
@@ -114,14 +111,14 @@ export default function LearningRecommendations({ skillGaps = {}, jobRole = '' }
       )}
 
       {selectedSkill && (
-        <div style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
-          <p style={{ fontSize: '0.85rem', marginBottom: '12px', opacity: 0.7 }}>
+        <div style={{ marginTop: '20px', borderTop: '1px solid var(--border-subtle)', paddingTop: '16px' }}>
+          <p style={{ fontSize: '0.85rem', marginBottom: '12px', color: 'var(--text-secondary)' }}>
             Top tutorials for <strong>{selectedSkill}</strong>:
           </p>
 
           {loading && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', opacity: 0.7 }}>
-              <Loader2 size={16} /> Loading tutorials...
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-secondary)' }}>
+              <Loader2 size={16} className="spinner-icon" /> Loading tutorials...
             </div>
           )}
 
@@ -141,8 +138,8 @@ export default function LearningRecommendations({ skillGaps = {}, jobRole = '' }
                   rel="noopener noreferrer"
                   style={{
                     display: 'block', textDecoration: 'none', color: 'inherit',
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '12px', overflow: 'hidden',
+                    background: 'var(--bg-subtle)', border: '1px solid var(--border-subtle)',
+                    borderRadius: '10px', overflow: 'hidden',
                   }}
                 >
                   <img

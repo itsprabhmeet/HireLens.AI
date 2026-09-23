@@ -16,19 +16,16 @@ export default function ScoreGauge({
   // Determine score tier & colors
   let tierLabel = 'Low Match';
   let tierPillClass = 'pill-danger';
-  let strokeColor = '#f43f5e';
-  let glowColor = 'rgba(244, 63, 94, 0.3)';
+  let strokeColor = '#9c3b34';
 
   if (score >= 75) {
     tierLabel = 'Strong Match';
     tierPillClass = 'pill-success';
-    strokeColor = '#10b981';
-    glowColor = 'rgba(16, 185, 129, 0.35)';
+    strokeColor = '#2f6b3f';
   } else if (score >= 50) {
     tierLabel = 'Potential Match';
     tierPillClass = 'pill-warning';
-    strokeColor = '#f59e0b';
-    glowColor = 'rgba(245, 158, 11, 0.35)';
+    strokeColor = '#9a6412';
   }
 
   // Normalize subscore percentages (handles both 0-1 ratio and already scaled 0-100 values)
@@ -55,24 +52,6 @@ export default function ScoreGauge({
         {/* Radial SVG Gauge */}
         <div className="svg-gauge-container">
           <svg className="svg-gauge" width="200" height="200" viewBox="0 0 200 200">
-            <defs>
-              <linearGradient id="gaugeGradientEmerald" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#34d399" />
-                <stop offset="100%" stopColor="#059669" />
-              </linearGradient>
-              <linearGradient id="gaugeGradientAmber" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fbbf24" />
-                <stop offset="100%" stopColor="#d97706" />
-              </linearGradient>
-              <linearGradient id="gaugeGradientDanger" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#fb7185" />
-                <stop offset="100%" stopColor="#e11d48" />
-              </linearGradient>
-              <filter id="gaugeGlow">
-                <feDropShadow dx="0" dy="0" stdDeviation="6" floodColor={strokeColor} floodOpacity="0.5" />
-              </filter>
-            </defs>
-
             {/* Background Track Ring */}
             <circle
               className="gauge-track"
@@ -95,14 +74,7 @@ export default function ScoreGauge({
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
               transform="rotate(-90 100 100)"
-              filter="url(#gaugeGlow)"
-              stroke={
-                score >= 75
-                  ? 'url(#gaugeGradientEmerald)'
-                  : score >= 50
-                  ? 'url(#gaugeGradientAmber)'
-                  : 'url(#gaugeGradientDanger)'
-              }
+              stroke={strokeColor}
             />
           </svg>
 

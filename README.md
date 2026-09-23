@@ -1,7 +1,7 @@
 # HireLens.AI — Explainable AI Recruitment Intelligence
 
 > **MCA Minor Project** — NLP + Machine Learning + Explainable AI  
-> **v2.0.0** · FastAPI Backend · React 19 + Vite Frontend · Streamlit Classic Mode
+> **v2.0.0** · FastAPI Backend · React 19 + Vite Frontend
 
 A full-stack AI-powered resume screening system that scores how well a candidate matches a job description and **explains *why*** using SHAP — not a black box. Supports single and batch screening, blind (anonymised) mode, automated interview question generation, and a live job description URL fetcher.
 
@@ -60,16 +60,12 @@ bash run.sh
 
 # Full-stack developer mode (Vite HMR + FastAPI live reload)
 bash run.sh dev
-
-# Classic Streamlit mode
-bash run.sh streamlit
 ```
 
 | Mode | URL |
 |------|-----|
 | Modern (production) | http://127.0.0.1:8000 |
 | Dev (Vite HMR) | http://127.0.0.1:5173 |
-| Classic Streamlit | http://127.0.0.1:8501 |
 
 ---
 
@@ -78,8 +74,7 @@ bash run.sh streamlit
 ```
 HireLens.AI/
 ├── api.py                         ← FastAPI backend (v2.0.0) — ML, NLP & SHAP pipelines
-├── app.py                         ← Streamlit classic app (legacy / alternate mode)
-├── run.sh                         ← Unified launcher (modern | dev | streamlit)
+├── run.sh                         ← Unified launcher (modern | dev)
 ├── fix_job_url_endpoint.py        ← Utility: patch job URL endpoint
 ├── requirements.txt
 │
@@ -141,7 +136,7 @@ HireLens.AI/
 | 6 | **Narrative Engine** | Deterministic, offline rule-based engine converts numeric scores into a plain-language recruiter write-up (verdict, strengths, gaps, suggestions) |
 | 7 | **Job URL Fetcher** | Extracts job descriptions from ATS URLs (Greenhouse, Lever, Workday, SmartRecruiters) via JSON-LD schema.org parsing |
 | 8 | **Skills Competency Matrix** | Categorises skills across Programming Languages, Frameworks, Cloud & DevOps, Databases, System Design, and Soft Skills |
-| 9 | **Dual Interface** | Modern React 19 SPA (default) or classic Streamlit app — same ML backend |
+| 9 | **Modern Interface** | React 19 SPA with high-performance responsive UI and SVG gauges |
 
 ---
 
@@ -227,10 +222,7 @@ python src/explain.py
 # Step 5A: Launch modern full-stack app
 bash run.sh
 
-# Step 5B: Launch classic Streamlit app
-bash run.sh streamlit
-
-# Step 5C: Full-stack developer mode (HMR + live reload)
+# Step 5B: Full-stack developer mode (HMR + live reload)
 bash run.sh dev
 ```
 
@@ -246,7 +238,7 @@ bash run.sh dev
 | How are interview questions generated? | The narrative engine analyses missing JD requirements and maps them to technical question templates targeting those exact gaps |
 | What is Category Alignment? | The JD itself is passed through the role classifier to verify the job description and candidate background belong to the same functional family |
 | How does Batch Screening scale? | Processes all documents sequentially, sorts by fit score, and returns a ranked leaderboard with a CSV audit export |
-| Why FastAPI over Streamlit for v2? | FastAPI decouples the ML backend from the UI, enables a rich React SPA, and exposes a clean REST API for future integrations |
+| Why FastAPI + React for v2? | Decouples the ML backend from the UI, enables a rich React SPA, and exposes a clean REST API for future integrations |
 | How does the Job URL Fetcher work? | Tries `JobPosting` JSON-LD (schema.org) first, then falls back to a "biggest text block" heuristic; hostile domains (LinkedIn, Indeed) are short-circuited immediately |
 
 ---
@@ -265,7 +257,6 @@ bash run.sh dev
 | **Resume Parsing** | pdfplumber, PyPDF2, python-docx |
 | **Bias Mitigation** | Regex & heuristic PII anonymiser |
 | **Job URL Parsing** | requests + BeautifulSoup4 (JSON-LD schema.org + heuristic) |
-| **Classic Interface** | Streamlit |
 | **Visualisation** | Matplotlib, Seaborn, Plotly |
 | **Serialisation** | joblib |
 

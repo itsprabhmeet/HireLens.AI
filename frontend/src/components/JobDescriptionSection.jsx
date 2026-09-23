@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Briefcase, Sparkles, RotateCcw, FileText, Link2, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { RotateCcw, FileText, Link2, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { JOB_DESCRIPTION_PRESETS } from '../presets';
 
 export default function JobDescriptionSection({ jdText, setJdText }) {
   const wordCount = jdText.trim() ? jdText.trim().split(/\s+/).length : 0;
   const charCount = jdText.length;
 
+  const [showUrlImport, setShowUrlImport] = useState(false);
   const [jobUrl, setJobUrl] = useState('');
   const [fetchingUrl, setFetchingUrl] = useState(false);
-  const [fetchMessage, setFetchMessage] = useState(null); // { type: 'success' | 'error', text }
+  const [fetchMessage, setFetchMessage] = useState(null);
 
   const handleSelectPreset = (preset) => {
     setJdText(preset.text);
@@ -16,11 +17,12 @@ export default function JobDescriptionSection({ jdText, setJdText }) {
 
   const handleClear = () => {
     setJdText('');
+    setFetchMessage(null);
   };
 
   const handleFetchUrl = async () => {
     if (!jobUrl.trim()) {
-      setFetchMessage({ type: 'error', text: 'Paste a job posting URL first.' });
+      setFetchMessage({ type: 'error', text: 'Please enter a valid job URL first.' });
       return;
     }
     setFetchingUrl(true);
@@ -34,14 +36,14 @@ export default function JobDescriptionSection({ jdText, setJdText }) {
       const data = await response.json();
       if (data.success) {
         setJdText(data.text);
-        setFetchMessage({ type: 'success', text: data.message });
+        setFetchMessage({ type: 'success', text: data.message || 'Job description extracted successfully.' });
       } else {
-        setFetchMessage({ type: 'error', text: data.message });
+        setFetchMessage({ type: 'error', text: data.message || 'Could not parse job description from URL.' });
       }
     } catch (err) {
       setFetchMessage({
         type: 'error',
-        text: 'Could not reach the server to fetch that link. Please paste the job description text instead.',
+        text: 'Connection failed. Please paste the job description directly.',
       });
     } finally {
       setFetchingUrl(false);
@@ -52,88 +54,84 @@ export default function JobDescriptionSection({ jdText, setJdText }) {
     <div className="glass-panel jd-card">
       <div className="section-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            <Briefcase size={18} className="text-indigo" />
-          </div>
           <div>
-            <h2 className="section-title">Target Job Description</h2>
-            <p className="section-subtitle">Define role requirements, required competencies, and experience parameters</p>
+            <h2 className="section-title">Job description</h2>
+            <p className="section-subtitle">Paste the role you're hiring for, or start from a template</p>
           </div>
         </div>
 
         {/* Action Controls */}
         <div className="section-header-actions">
+          <button
+            type="button"
+            className={`btn-action-pill ${showUrlImport ? 'btn-action-pill-active' : ''}`}
+            onClick={() => setShowUrlImport(!showUrlImport)}
+            title="Import job description from a careers page URL"
+          >
+            <Link2 size={13} />
+            <span>Import URL</span>
+          </button>
           {jdText && (
             <button
               type="button"
-              className="btn-ghost"
+              className="btn-action-pill"
               onClick={handleClear}
               title="Clear job description"
             >
-              <RotateCcw size={14} />
+              <RotateCcw size={13} />
               <span>Clear</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Paste a job link instead of typing */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
-        <div style={{
-          flex: 1, display: 'flex', alignItems: 'center', gap: '8px',
-          background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: '10px', padding: '0 12px',
-        }}>
-          <Link2 size={15} className="text-indigo" style={{ flexShrink: 0, opacity: 0.7 }} />
-          <input
-            type="text"
-            value={jobUrl}
-            onChange={(e) => setJobUrl(e.target.value)}
-            placeholder="Or paste a job posting link (e.g. a company careers page)..."
-            id="input-job-url"
-            style={{
-              flex: 1, background: 'transparent', border: 'none', outline: 'none',
-              color: 'inherit', padding: '10px 0', fontSize: '0.9rem',
-            }}
-          />
-        </div>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={handleFetchUrl}
-          disabled={fetchingUrl}
-        >
-          {fetchingUrl ? <Loader2 size={14} /> : <Link2 size={14} />}
-          <span>{fetchingUrl ? 'Fetching...' : 'Fetch'}</span>
-        </button>
-      </div>
-      {fetchMessage && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem',
-          marginBottom: '14px',
-        }} className={fetchMessage.type === 'success' ? 'text-emerald' : 'text-warning'}>
-          {fetchMessage.type === 'success' ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
-          <span>{fetchMessage.text}</span>
+      {/* Collapsible URL Import Drawer */}
+      {showUrlImport && (
+        <div className="url-import-panel animate-fade-in">
+          <div className="url-input-group">
+            <Link2 size={14} className="url-input-icon text-muted" />
+            <input
+              type="text"
+              value={jobUrl}
+              onChange={(e) => setJobUrl(e.target.value)}
+              placeholder="Paste careers URL (e.g. Greenhouse, Lever, LinkedIn, Workday)..."
+              id="input-job-url"
+              className="url-text-input"
+            />
+            <button
+              type="button"
+              className="btn-fetch-submit"
+              onClick={handleFetchUrl}
+              disabled={fetchingUrl}
+            >
+              {fetchingUrl ? <Loader2 size={13} className="spinner-icon" /> : null}
+              <span>{fetchingUrl ? 'Fetching...' : 'Extract'}</span>
+            </button>
+          </div>
+          {fetchMessage && (
+            <div className={`url-feedback ${fetchMessage.type === 'success' ? 'url-feedback-success' : 'url-feedback-error'}`}>
+              {fetchMessage.type === 'success' ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+              <span>{fetchMessage.text}</span>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 1-Click Quick Presets */}
-      <div className="presets-row">
-        <span className="presets-label">
-          <Sparkles size={14} className="text-violet" /> Quick Presets:
-        </span>
-        <div className="presets-chips">
+      {/* Role Templates Bar */}
+      <div className="role-templates-container">
+        <span className="role-templates-label">Templates:</span>
+        <div className="role-templates-list">
           {JOB_DESCRIPTION_PRESETS.map((p) => {
             const isSelected = jdText === p.text;
+            const shortTitle = p.title.split(' & ')[0].split(' / ')[0];
             return (
               <button
                 key={p.id}
                 type="button"
-                className={`preset-chip ${isSelected ? 'preset-chip-active' : ''}`}
+                className={`role-template-chip ${isSelected ? 'role-template-chip-active' : ''}`}
                 onClick={() => handleSelectPreset(p)}
               >
-                <span>{p.title}</span>
-                <span className="preset-cat-tag">{p.category}</span>
+                <span>{shortTitle}</span>
               </button>
             );
           })}
@@ -144,10 +142,10 @@ export default function JobDescriptionSection({ jdText, setJdText }) {
       <div className="jd-textarea-wrapper">
         <textarea
           className="jd-textarea"
-          rows={7}
+          rows={9}
           value={jdText}
           onChange={(e) => setJdText(e.target.value)}
-          placeholder="Paste full job description here, or click one of the quick presets above (e.g. Senior Data Scientist, Python Backend Engineer)..."
+          placeholder="Paste job description text here, or select a role template above..."
           id="input-job-description"
         />
         <div className="jd-stats-bar">
@@ -158,7 +156,7 @@ export default function JobDescriptionSection({ jdText, setJdText }) {
           <span className="jd-stat-item">{charCount} characters</span>
           {wordCount >= 50 && (
             <span className="pill pill-success jd-quality-pill">
-              Optimal Depth
+              Good detail
             </span>
           )}
         </div>

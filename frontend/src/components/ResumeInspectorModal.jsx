@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { X, Copy, Check, FileText, Search, ShieldCheck } from 'lucide-react';
+import { X, Copy, Check, Search } from 'lucide-react';
 
 export default function ResumeInspectorModal({
   candidate,
@@ -35,9 +35,6 @@ export default function ResumeInspectorModal({
         {/* Modal Header */}
         <div className="modal-header">
           <div className="modal-title-group">
-            <div className="section-icon-badge">
-              <FileText size={18} className="text-indigo" />
-            </div>
             <div>
               <h3 className="modal-title">Extracted Resume Content</h3>
               <p className="modal-subtitle">

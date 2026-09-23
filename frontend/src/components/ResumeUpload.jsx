@@ -1,16 +1,12 @@
 import React, { useState, useRef } from 'react';
 import {
   UploadCloud,
-  FileCheck,
   X,
   FileText,
-  Sparkles,
   Clipboard,
   Layers,
-  User,
   CheckCircle2,
 } from 'lucide-react';
-import { RESUME_PRESETS } from '../presets';
 
 export default function ResumeUpload({
   mode,
@@ -74,24 +70,6 @@ export default function ResumeUpload({
     setBatchFiles((prev) => prev.filter((_, idx) => idx !== indexToRemove));
   };
 
-  // 1-Click Demo Candidate loader
-  const handleSelectResumePreset = (preset) => {
-    setResumeText(preset.text);
-    setResumeFile(null);
-    setInputTab('paste');
-  };
-
-  // 1-Click Load All Demo Resumes for Batch Mode
-  const handleLoadDemoBatch = () => {
-    const demoFiles = RESUME_PRESETS.map((preset) => {
-      const blob = new Blob([preset.text], { type: 'text/plain' });
-      return new File([blob], `${preset.candidateName.replace(/\s+/g, '_')}_Resume.txt`, {
-        type: 'text/plain',
-      });
-    });
-    setBatchFiles(demoFiles);
-  };
-
   const formatFileSize = (bytes) => {
     if (!bytes) return '0 B';
     const k = 1024;
@@ -104,21 +82,14 @@ export default function ResumeUpload({
     <div className="glass-panel resume-upload-card">
       <div className="section-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            {mode === 'single' ? (
-              <FileCheck size={18} className="text-emerald" />
-            ) : (
-              <Layers size={18} className="text-cyan" />
-            )}
-          </div>
           <div>
             <h2 className="section-title">
-              {mode === 'single' ? 'Candidate Resume' : 'Batch Resumes Pool'}
+              {mode === 'single' ? 'Resume' : 'Resumes'}
             </h2>
             <p className="section-subtitle">
               {mode === 'single'
-                ? 'Upload PDF, DOCX, TXT or paste resume text for deep-dive AI evaluation'
-                : 'Upload multiple resumes simultaneously to rank and benchmark candidates'}
+                ? 'Upload a PDF, DOCX, or TXT file, or paste the text directly'
+                : 'Upload multiple resumes to rank against the same job description'}
             </p>
           </div>
         </div>
@@ -154,40 +125,6 @@ export default function ResumeUpload({
         )}
       </div>
 
-      {/* Preset demo candidates row */}
-      <div className="presets-row">
-        <span className="presets-label">
-          <Sparkles size={14} className="text-violet" /> Demo Candidates:
-        </span>
-        {mode === 'single' ? (
-          <div className="presets-chips">
-            {RESUME_PRESETS.map((p) => {
-              const isSelected = resumeText === p.text;
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`preset-chip ${isSelected ? 'preset-chip-active' : ''}`}
-                  onClick={() => handleSelectResumePreset(p)}
-                >
-                  <User size={13} />
-                  <span>{p.candidateName}</span>
-                  <span className="preset-cat-tag">{p.role}</span>
-                </button>
-              );
-            })}
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="preset-chip preset-chip-batch-load"
-            onClick={handleLoadDemoBatch}
-          >
-            <Sparkles size={14} className="text-emerald" />
-            <span>Load 4 Pre-Configured Demo Resumes</span>
-          </button>
-        )}
-      </div>
 
       {/* SINGLE MODE CONTENT */}
       {mode === 'single' && (
@@ -203,7 +140,7 @@ export default function ResumeUpload({
                     <div className="file-meta">
                       <span className="file-name">{resumeFile.name}</span>
                       <span className="file-size">
-                        {formatFileSize(resumeFile.size)} • Ready for AI screening
+                        {formatFileSize(resumeFile.size)}
                       </span>
                     </div>
                   </div>
@@ -234,13 +171,13 @@ export default function ResumeUpload({
                     style={{ display: 'none' }}
                   />
                   <div className="dropzone-icon-circle">
-                    <UploadCloud size={30} className="text-indigo" />
+                    <UploadCloud size={26} className="text-muted" />
                   </div>
                   <p className="dropzone-main-text">
                     Drag and drop resume here, or <span className="text-indigo-bold">browse file</span>
                   </p>
                   <p className="dropzone-sub-text">
-                    Supports high-fidelity parsing for PDF, DOCX, and TXT files (up to 15MB)
+                    PDF, DOCX, or TXT — up to 15MB
                   </p>
                 </div>
               )}
@@ -255,7 +192,7 @@ export default function ResumeUpload({
                   setResumeText(e.target.value);
                   setResumeFile(null);
                 }}
-                placeholder="Paste candidate resume content here, or select a demo candidate above..."
+                placeholder="Paste candidate resume content here..."
                 id="input-resume-text"
               />
               <div className="jd-stats-bar">
@@ -294,13 +231,13 @@ export default function ResumeUpload({
               style={{ display: 'none' }}
             />
             <div className="dropzone-icon-circle">
-              <Layers size={30} className="text-cyan" />
+              <Layers size={26} className="text-muted" />
             </div>
             <p className="dropzone-main-text">
               Drop multiple resumes here, or <span className="text-cyan-bold">browse folder</span>
             </p>
             <p className="dropzone-sub-text">
-              Upload up to 50 resumes at once. Supports batch ranking, filtering, and export.
+              Up to 50 resumes — you can filter and export the ranking afterward
             </p>
           </div>
 
@@ -309,7 +246,7 @@ export default function ResumeUpload({
             <div className="batch-files-list">
               <div className="batch-list-header">
                 <span className="batch-count-badge">
-                  <CheckCircle2 size={14} className="text-emerald" /> {batchFiles.length} Resumes Staged for Evaluation
+                  <CheckCircle2 size={14} className="text-emerald" /> {batchFiles.length} resume{batchFiles.length === 1 ? '' : 's'} staged
                 </span>
               </div>
               <div className="batch-items-grid">

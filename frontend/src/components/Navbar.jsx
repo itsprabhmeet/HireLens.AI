@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, Users, UserCheck, ShieldCheck, EyeOff, Activity, Cpu } from 'lucide-react';
+import { Target, Users, UserCheck, ShieldCheck, EyeOff, CheckCircle2 } from 'lucide-react';
 
 export default function Navbar({
   mode,
@@ -11,19 +11,15 @@ export default function Navbar({
   return (
     <header className="navbar-container">
       <div className="navbar-inner">
-        {/* Brand Logo & Name */}
+        {/* Brand Logo */}
         <div className="navbar-brand">
-          <div className="brand-icon-wrapper">
-            <Sparkles className="brand-icon" size={22} />
+          <div className="brand-logo-mark">
+            <Target size={18} className="brand-logo-icon" />
           </div>
           <div className="brand-text-block">
             <div className="brand-title-row">
-              <span className="brand-title">HireLens<span className="brand-dot">.AI</span></span>
-              <span className="pill pill-brand brand-badge">
-                <Cpu size={12} /> v2.0 PRO
-              </span>
+              <span className="brand-title">HireLens</span>
             </div>
-            <span className="brand-subtitle">Explainable Talent Intelligence & Job-Fit Classifier</span>
           </div>
         </div>
 
@@ -35,8 +31,8 @@ export default function Navbar({
             onClick={() => setMode('single')}
             id="tab-single-screening"
           >
-            <UserCheck size={16} />
-            <span>Single Deep-Dive</span>
+            <UserCheck size={15} />
+            <span>Single Evaluation</span>
           </button>
           <button
             type="button"
@@ -44,7 +40,7 @@ export default function Navbar({
             onClick={() => setMode('batch')}
             id="tab-batch-screening"
           >
-            <Users size={16} />
+            <Users size={15} />
             <span>Batch Leaderboard</span>
           </button>
         </div>
@@ -55,30 +51,25 @@ export default function Navbar({
           <div
             className={`blind-mode-toggle ${blindMode ? 'blind-mode-active' : ''}`}
             onClick={() => setBlindMode(!blindMode)}
-            title="Anonymize candidate names, emails, phones, and links to ensure 100% merit-based evaluation without unconscious bias."
+            title="Hide candidate names, emails, phones, and profile links while scoring"
             role="button"
             tabIndex={0}
             id="toggle-blind-mode"
           >
             {blindMode ? (
-              <ShieldCheck size={17} className="text-emerald" />
+              <ShieldCheck size={16} className="text-emerald" />
             ) : (
-              <EyeOff size={17} className="text-secondary" />
+              <EyeOff size={16} className="text-muted" />
             )}
             <div className="blind-toggle-label">
               <span className="blind-title">Blind Mode</span>
-              <span className="blind-sub">{blindMode ? 'Active (Bias-Free)' : 'Off'}</span>
+              <span className="blind-sub">{blindMode ? 'Anonymized' : 'Standard'}</span>
             </div>
             <div className={`switch-pill ${blindMode ? 'switch-on' : ''}`}>
               <div className="switch-thumb" />
             </div>
           </div>
 
-          {/* Engine Status */}
-          <div className="server-status-pill" title={backendStatus ? 'Connected to FastAPI AI Engine' : 'Checking server status...'}>
-            <span className={`status-dot ${backendStatus ? 'status-dot-online' : 'status-dot-offline'}`} />
-            <span className="status-label">{backendStatus ? 'Engine Ready' : 'Connecting...'}</span>
-          </div>
         </div>
       </div>
     </header>

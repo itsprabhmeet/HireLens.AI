@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   AlertTriangle,
   Lightbulb,
-  Sparkles,
 } from 'lucide-react';
 
 export default function NarrativeCard({ narrative = {} }) {
@@ -32,13 +31,10 @@ export default function NarrativeCard({ narrative = {} }) {
     <div className="glass-panel narrative-card">
       <div className="section-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            <Sparkles size={18} className="text-violet" />
-          </div>
           <div>
-            <h2 className="section-title">Executive Recruiter Assessment</h2>
+            <h2 className="section-title">Summary</h2>
             <p className="section-subtitle">
-              Synthesized qualitative evaluation highlighting candidate strengths, risks, and next steps
+              Strengths, gaps, and next steps for this candidate
             </p>
           </div>
         </div>
@@ -50,7 +46,7 @@ export default function NarrativeCard({ narrative = {} }) {
           <FileCheck2 size={24} className="text-indigo" />
         </div>
         <div className="verdict-text-col">
-          <span className="verdict-headline">AI Recruiter Synthesis</span>
+          <span className="verdict-headline">Overall verdict</span>
           <p className="verdict-body">{verdict}</p>
         </div>
       </div>
@@ -61,7 +57,7 @@ export default function NarrativeCard({ narrative = {} }) {
         <div className="assessment-column strengths-col">
           <div className="column-header">
             <CheckCircle2 size={16} className="text-emerald" />
-            <h3 className="column-title text-emerald">Demonstrated Strengths ({safeStrengths.length})</h3>
+            <h3 className="column-title text-emerald">Strengths ({safeStrengths.length})</h3>
           </div>
           <ul className="assessment-list">
             {safeStrengths.length > 0 ? (
@@ -81,7 +77,7 @@ export default function NarrativeCard({ narrative = {} }) {
         <div className="assessment-column gaps-col">
           <div className="column-header">
             <AlertTriangle size={16} className="text-warning" />
-            <h3 className="column-title text-warning">Identified Competency Gaps ({safeGaps.length})</h3>
+            <h3 className="column-title text-warning">Gaps ({safeGaps.length})</h3>
           </div>
           <ul className="assessment-list">
             {safeGaps.length > 0 ? (
@@ -92,7 +88,7 @@ export default function NarrativeCard({ narrative = {} }) {
                 </li>
               ))
             ) : (
-              <li className="assessment-empty">No severe competency gaps detected against this JD.</li>
+              <li className="assessment-empty">No significant gaps found against this job description.</li>
             )}
           </ul>
         </div>
@@ -103,7 +99,7 @@ export default function NarrativeCard({ narrative = {} }) {
         <div className="suggestions-box">
           <div className="suggestions-header">
             <Lightbulb size={16} className="text-cyan" />
-            <h3 className="suggestions-title text-cyan">Actionable Hiring Recommendations</h3>
+            <h3 className="suggestions-title text-cyan">What to do next</h3>
           </div>
           <div className="suggestions-chips-grid">
             {safeSuggestions.map((sug, idx) => (

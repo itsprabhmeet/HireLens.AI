@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X, Layers, Filter, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Check, X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function SkillsMatrix({
   categorizedSkills = {},
@@ -18,13 +18,10 @@ export default function SkillsMatrix({
     <div className="glass-panel skills-matrix-card">
       <div className="section-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            <Layers size={18} className="text-cyan" />
-          </div>
           <div>
-            <h2 className="section-title">Categorized Competencies Matrix</h2>
+            <h2 className="section-title">Skills</h2>
             <p className="section-subtitle">
-              Taxonomy classification of matched technical proficiencies vs unaddressed requirements
+              Matched and missing skills, grouped by category
             </p>
           </div>
         </div>
@@ -58,9 +55,9 @@ export default function SkillsMatrix({
       {/* Coverage Banner */}
       <div className="skills-coverage-banner">
         <div className="coverage-info">
-          <span className="coverage-label">Overall Skill Coverage:</span>
+          <span className="coverage-label">Skill coverage:</span>
           <span className="coverage-number">{coveragePercent}%</span>
-          <span className="coverage-detail">({totalMatched} of {totalSkills} required competencies)</span>
+          <span className="coverage-detail">({totalMatched} of {totalSkills} required skills)</span>
         </div>
         <div className="coverage-bar">
           <div className="coverage-bar-fill" style={{ width: `${coveragePercent}%` }} />

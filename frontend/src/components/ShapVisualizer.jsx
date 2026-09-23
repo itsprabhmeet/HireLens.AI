@@ -1,5 +1,5 @@
 import React from 'react';
-import { HelpCircle, BarChart3, TrendingUp, TrendingDown } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 
 export default function ShapVisualizer({ shapFeatures = {} }) {
   const entries = Object.entries(shapFeatures || {});
@@ -18,23 +18,20 @@ export default function ShapVisualizer({ shapFeatures = {} }) {
     <div className="glass-panel shap-visualizer-card">
       <div className="section-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            <BarChart3 size={18} className="text-violet" />
-          </div>
           <div>
-            <h2 className="section-title">Explainable AI (SHAP) Attribution</h2>
+            <h2 className="section-title">Why this score</h2>
             <p className="section-subtitle">
-              Token-level feature influence explaining why the classifier made this hiring prediction
+              The terms that pushed the score up or down the most
             </p>
           </div>
         </div>
 
         <div className="shap-legend">
           <span className="legend-item">
-            <span className="legend-box bg-emerald" /> Positive Alignment
+            <span className="legend-box bg-emerald" /> Helped
           </span>
           <span className="legend-item">
-            <span className="legend-box bg-danger" /> Gap Penalty
+            <span className="legend-box bg-danger" /> Hurt
           </span>
         </div>
       </div>
@@ -89,7 +86,7 @@ export default function ShapVisualizer({ shapFeatures = {} }) {
       <div className="shap-footnote">
         <HelpCircle size={14} className="text-muted" />
         <span>
-          Positive SHAP values reinforce domain readiness. Negative values indicate absence of key terminology expected for this level.
+          Green bars are terms in the resume that match the role. Red bars are expected terms that were missing.
         </span>
       </div>
     </div>

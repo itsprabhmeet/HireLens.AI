@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { HelpCircle, Copy, Check, MessageSquare, Compass } from 'lucide-react';
+import { Copy, Check, Compass } from 'lucide-react';
 
 export default function InterviewQuestionsCard({ questions = [] }) {
   const [copiedIdx, setCopiedIdx] = useState(null);
@@ -18,13 +18,10 @@ export default function InterviewQuestionsCard({ questions = [] }) {
     <div className="glass-panel interview-questions-card">
       <div className="section-header">
         <div className="section-title-group">
-          <div className="section-icon-badge">
-            <MessageSquare size={18} className="text-emerald" />
-          </div>
           <div>
-            <h2 className="section-title">Targeted Interview Questions</h2>
+            <h2 className="section-title">Interview questions</h2>
             <p className="section-subtitle">
-              AI-generated technical probes specifically designed to verify candidate depth on identified gaps
+              Questions to probe the gaps identified above
             </p>
           </div>
         </div>
@@ -67,7 +64,7 @@ export default function InterviewQuestionsCard({ questions = [] }) {
               <div className="question-probe-tip">
                 <Compass size={13} className="text-cyan" />
                 <span className="probe-tip-text">
-                  <strong>Interviewer Note:</strong> Probe for concrete production examples, architectural trade-offs, and how they handled failure scenarios.
+                  <strong>Tip:</strong> ask for a concrete example, not a definition — listen for real trade-offs and what went wrong.
                 </span>
               </div>
             </div>

@@ -4,10 +4,7 @@ DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 MODE="${1:-modern}"
 
-if [ "$MODE" = "streamlit" ]; then
-    echo "🚀 Starting HireLens.AI Classic Streamlit App on http://127.0.0.1:8501..."
-    "$DIR/.venv/bin/streamlit" run "$DIR/app.py"
-elif [ "$MODE" = "dev" ]; then
+if [ "$MODE" = "dev" ]; then
     echo "⚡ Starting HireLens.AI in Full-Stack Developer Mode (FastAPI + Vite Dev Server)..."
     echo "   Backend:  http://127.0.0.1:8000"
     echo "   Frontend: http://127.0.0.1:5173 (with Hot Module Replacement)"

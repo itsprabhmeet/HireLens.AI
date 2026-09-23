@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import confetti from 'canvas-confetti';
 import {
-  Sparkles,
   ArrowRight,
   AlertTriangle,
   Loader2,
@@ -10,6 +8,8 @@ import {
   Zap,
   BarChart2,
   Shield,
+  Layers,
+  FileCheck,
 } from 'lucide-react';
 
 import Navbar from './components/Navbar';
@@ -25,7 +25,7 @@ import LeaderboardTable from './components/LeaderboardTable';
 import CandidateDrawer from './components/CandidateDrawer';
 import ResumeInspectorModal from './components/ResumeInspectorModal';
 
-import { JOB_DESCRIPTION_PRESETS, RESUME_PRESETS } from './presets';
+import { JOB_DESCRIPTION_PRESETS } from './presets';
 
 export default function App() {
   // Navigation & Settings
@@ -33,12 +33,12 @@ export default function App() {
   const [blindMode, setBlindMode] = useState(false);
   const [backendStatus, setBackendStatus] = useState(false);
 
-  // Job Description state (prefill with realistic Data Science JD for zero-friction demo)
+  // Job Description state (prefill with realistic Data Science JD)
   const [jdText, setJdText] = useState(JOB_DESCRIPTION_PRESETS[0].text);
 
   // Single Screening input state
   const [resumeFile, setResumeFile] = useState(null);
-  const [resumeText, setResumeText] = useState(RESUME_PRESETS[0].text);
+  const [resumeText, setResumeText] = useState('');
 
   // Batch Screening input state
   const [batchFiles, setBatchFiles] = useState([]);
@@ -59,6 +59,22 @@ export default function App() {
     checkHealth();
   }, []);
 
+  // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to run screening
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (mode === 'single') {
+          handleScreenSingle();
+        } else {
+          handleScreenBatch();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mode, jdText, resumeFile, resumeText, batchFiles, blindMode, loading]);
+
   const checkHealth = async () => {
     try {
       const res = await fetch('/api/status');
@@ -73,42 +89,29 @@ export default function App() {
     }
   };
 
-  // Trigger celebratory confetti for strong candidates
-  const fireConfetti = () => {
-    try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#6366f1', '#a855f7', '#10b981', '#38bdf8'],
-      });
-    } catch {
-      // ignore
-    }
-  };
-
   // Single resume evaluation
   const handleScreenSingle = async () => {
+    if (loading) return;
     if (!jdText.trim()) {
-      setError('Please provide a target job description before screening.');
+      setError('Please provide a job description before evaluating.');
       return;
     }
     if (!resumeFile && !resumeText.trim()) {
-      setError('Please upload a resume or paste resume text to evaluate.');
+      setError('Please upload a resume file or paste resume content to evaluate.');
       return;
     }
 
     setError(null);
     setLoading(true);
-    setLoadingStage('Extracting text & parsing skills...');
+    setLoadingStage('Reading resume and identifying skills...');
 
     const stageTimer1 = setTimeout(() => {
-      setLoadingStage('Generating neural embeddings & semantic similarity...');
-    }, 1200);
+      setLoadingStage('Comparing against the job description...');
+    }, 1100);
 
     const stageTimer2 = setTimeout(() => {
-      setLoadingStage('Synthesizing recruiter narrative & interview probes...');
-    }, 2500);
+      setLoadingStage('Putting together the summary...');
+    }, 2200);
 
     try {
       const formData = new FormData();
@@ -127,16 +130,12 @@ export default function App() {
       });
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({ detail: 'Screening failed' }));
+        const errData = await response.json().catch(() => ({ detail: 'Evaluation failed' }));
         throw new Error(errData.detail || `Server responded with status ${response.status}`);
       }
 
       const data = await response.json();
       setEvalResult(data);
-
-      if (data.fit_score >= 70) {
-        fireConfetti();
-      }
 
       // Smooth scroll to results
       setTimeout(() => {
@@ -144,7 +143,7 @@ export default function App() {
         if (el) el.scrollIntoView({ behavior: 'smooth' });
       }, 150);
     } catch (err) {
-      setError(err.message || 'An unexpected error occurred during screening.');
+      setError(err.message || 'An unexpected error occurred during evaluation.');
     } finally {
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
@@ -155,18 +154,19 @@ export default function App() {
 
   // Batch resumes evaluation
   const handleScreenBatch = async () => {
+    if (loading) return;
     if (!jdText.trim()) {
       setError('Please provide a target job description before batch screening.');
       return;
     }
     if (batchFiles.length === 0) {
-      setError('Please upload or load at least one resume for batch screening.');
+      setError('Please upload at least one candidate resume for batch screening.');
       return;
     }
 
     setError(null);
     setLoading(true);
-    setLoadingStage(`Evaluating and benchmarking ${batchFiles.length} candidates in parallel...`);
+    setLoadingStage(`Evaluating and ranking ${batchFiles.length} candidate resumes...`);
 
     try {
       const formData = new FormData();
@@ -188,15 +188,10 @@ export default function App() {
       }
 
       const data = await response.json();
-      setBatchResults(data.candidates || []);
+      setBatchResults(data.leaderboard);
 
-      if (data.candidates && data.candidates.some((c) => c.fit_score >= 75)) {
-        fireConfetti();
-      }
-
-      // Smooth scroll to leaderboard
       setTimeout(() => {
-        const el = document.getElementById('leaderboard-anchor');
+        const el = document.getElementById('batch-leaderboard-anchor');
         if (el) el.scrollIntoView({ behavior: 'smooth' });
       }, 150);
     } catch (err) {
@@ -206,6 +201,10 @@ export default function App() {
       setLoadingStage('');
     }
   };
+
+  const hasSingleInput = Boolean(resumeFile || resumeText.trim());
+  const hasBatchInput = batchFiles.length > 0;
+  const isReadyToRun = mode === 'single' ? hasSingleInput : hasBatchInput;
 
   return (
     <div className="app-layout">
@@ -218,21 +217,35 @@ export default function App() {
         backendStatus={backendStatus}
       />
 
-      {/* Hero Banner */}
-      <section className="hero-banner">
-        <div className="hero-inner">
-          <div className="hero-pill-tag">
-            <Sparkles size={14} className="text-violet" />
-            <span>Next-Gen Talent Intelligence Engine</span>
+      {/* Workspace Sub-header */}
+      <section className="workspace-header">
+        <div className="workspace-header-inner">
+          <div className="workspace-header-left">
+            <div className="workspace-breadcrumb">
+              <span className="breadcrumb-root">HireLens</span>
+              <span className="breadcrumb-separator">/</span>
+              <span className="breadcrumb-current">
+                {mode === 'single' ? 'Single candidate' : 'Batch ranking'}
+              </span>
+            </div>
+            <h1 className="workspace-title">
+              {mode === 'single' ? 'Candidate match assessment' : 'Batch applicant ranking'}
+            </h1>
+            <p className="workspace-subtitle">
+              {mode === 'single'
+                ? 'Compare a resume against a job description to see fit, skill gaps, and what to ask in the interview.'
+                : 'Screen a batch of resumes against one job description and rank them side by side.'}
+            </p>
           </div>
-          <h1 className="hero-title">
-            Intelligent Resume Screening, <br />
-            <span className="text-gradient">Explainable AI Talent Fit</span>
-          </h1>
-          <p className="hero-description">
-            Evaluate candidate suitability with dual-stage neural embeddings, categorized competency
-            matrices, bias-free blind screening, and tailored interview probes.
-          </p>
+
+          {blindMode && (
+            <div className="workspace-header-right">
+              <div className="workspace-stat-badge stat-badge-blind">
+                <Shield size={12} className="text-emerald" />
+                <span className="stat-badge-text">Blind mode on</span>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -243,7 +256,7 @@ export default function App() {
           <div className="alert-banner alert-banner-danger animate-fade-in">
             <AlertTriangle size={18} />
             <div className="alert-text-block">
-              <span className="alert-title">Evaluation Error</span>
+              <span className="alert-title">Evaluation Notice</span>
               <p className="alert-msg">{error}</p>
             </div>
             <button
@@ -273,45 +286,57 @@ export default function App() {
           />
         </div>
 
-        {/* Primary CTA Trigger Section */}
-        <div className="cta-action-bar">
-          <div className="cta-hints">
-            {blindMode && (
-              <span className="pill pill-success">
-                <Shield size={13} /> Bias-Free Blind Screening Active
-              </span>
-            )}
-            <span className="cta-engine-info">
-              Hybrid Transformer Embeddings + Random Forest Classifier + SHAP Explainability
-            </span>
-          </div>
+        {/* Primary Action Dock */}
+        <div className="action-dock">
+          <div className="action-dock-inner">
+            <div className="action-dock-status">
+              <div className="dock-status-icon">
+                {loading ? (
+                  <Loader2 size={16} className="spinner-icon text-indigo" />
+                ) : (
+                  <Zap size={16} className={isReadyToRun ? 'text-indigo' : 'text-muted'} />
+                )}
+              </div>
+              <div className="dock-status-text-block">
+                <span className="dock-status-title">
+                  {loading ? (loadingStage || 'Working...') : isReadyToRun ? 'Evaluation staged' : 'Add a resume to continue'}
+                </span>
+                <span className="dock-status-desc">
+                  {mode === 'single'
+                    ? (resumeFile ? `Resume file: ${resumeFile.name}` : resumeText.trim() ? `${resumeText.trim().split(/\s+/).length} words entered` : 'Attach a PDF/DOCX resume or paste text above')
+                    : (`${batchFiles.length} candidate file(s) staged`)}
+                </span>
+              </div>
+            </div>
 
-          <button
-            type="button"
-            className="btn-primary btn-cta"
-            disabled={loading}
-            onClick={mode === 'single' ? handleScreenSingle : handleScreenBatch}
-            id="btn-run-screening"
-          >
-            {loading ? (
-              <>
-                <Loader2 size={18} className="spinner-icon" />
-                <span>{loadingStage || 'Processing AI Models...'}</span>
-              </>
-            ) : mode === 'single' ? (
-              <>
-                <Sparkles size={18} />
-                <span>Screen Candidate Deep-Dive</span>
-                <ArrowRight size={18} />
-              </>
-            ) : (
-              <>
-                <BarChart2 size={18} />
-                <span>Rank & Benchmark Resumes</span>
-                <ArrowRight size={18} />
-              </>
-            )}
-          </button>
+            <div className="action-dock-controls">
+              <button
+                type="button"
+                className="btn-primary btn-run-evaluation"
+                disabled={loading || !isReadyToRun}
+                onClick={mode === 'single' ? handleScreenSingle : handleScreenBatch}
+                id="btn-run-screening"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 size={16} className="spinner-icon" />
+                    <span>Analyzing...</span>
+                  </>
+                ) : mode === 'single' ? (
+                  <>
+                    <span>Evaluate Candidate</span>
+                    <span className="btn-shortcut-hint">Ctrl ↵</span>
+                  </>
+                ) : (
+                  <>
+                    <BarChart2 size={16} />
+                    <span>Rank Candidates ({batchFiles.length})</span>
+                    <span className="btn-shortcut-hint">Ctrl ↵</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* RESULTS SECTION: SINGLE CANDIDATE DEEP-DIVE */}
@@ -319,63 +344,74 @@ export default function App() {
           <div id="evaluation-results-anchor" className="results-container animate-fade-in">
             <div className="results-header-bar">
               <div className="results-title-group">
-                <h2 className="results-heading">Candidate Evaluation Report</h2>
-                <p className="results-subheading">
-                  Comprehensive audit for <strong>{evalResult.candidate}</strong> against target job description
-                </p>
+                <div className="results-status-icon">
+                  <CheckCircle2 size={18} className="text-emerald" />
+                </div>
+                <div>
+                  <h2 className="results-heading">
+                    {evalResult.candidate_name || 'Candidate'}
+                  </h2>
+                  <p className="results-subheading">
+                    Predicted role: <strong className="text-primary">{evalResult.predicted_category || 'N/A'}</strong>
+                  </p>
+                </div>
               </div>
 
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => setRawResumeCandidate(evalResult)}
-              >
-                Inspect Extracted Text
-              </button>
+              <div className="results-actions">
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setRawResumeCandidate(evalResult)}
+                >
+                  <FileCheck size={14} />
+                  <span>View resume text</span>
+                </button>
+              </div>
             </div>
 
-            {/* Score & Subscore Gauges */}
-            <ScoreGauge
-              fitScore={evalResult.fit_score}
-              predictedCategory={evalResult.predicted_category}
-              semanticSimilarity={evalResult.semantic_similarity}
-              lexicalRelevance={evalResult.lexical_relevance || evalResult.jd_relevance}
-              categoryAlignment={evalResult.category_alignment}
-              confidence={evalResult.confidence}
-              blindMode={evalResult.blind_mode}
-              redactionCounts={evalResult.redaction_counts}
-            />
+            {/* Top Results Grid: Score Gauge + Executive Narrative */}
+            <div className="results-top-grid">
+              <ScoreGauge
+                fitScore={evalResult.fit_score}
+                predictedCategory={evalResult.predicted_category}
+                semanticSimilarity={evalResult.semantic_similarity}
+                lexicalRelevance={evalResult.lexical_relevance}
+                categoryAlignment={evalResult.category_alignment}
+                confidence={evalResult.confidence}
+                blindMode={evalResult.blind_mode}
+                redactionCounts={evalResult.redaction_counts}
+              />
 
-            {/* Executive Recruiter Assessment Synthesis */}
-            <NarrativeCard narrative={evalResult.narrative} />
+              <NarrativeCard narrative={evalResult.narrative} />
+            </div>
 
-            {/* Categorized Competencies Taxonomy Matrix */}
+            {/* Skills Competency Matrix */}
             <SkillsMatrix
               categorizedSkills={evalResult.categorized_skills}
               matchedKeywords={evalResult.matched_keywords}
               missingKeywords={evalResult.missing_keywords}
             />
 
-            {/* Vocabulary-independent skill gaps + YouTube tutorial recommendations */}
-            <LearningRecommendations skillGaps={evalResult.skill_gaps} jobRole={evalResult.predicted_category} />
+            {/* Targeted Learning & Upskilling Recommendations */}
+            <LearningRecommendations
+              skillGaps={evalResult.skill_gaps}
+              jobRole={evalResult.predicted_category}
+            />
 
-            {/* Targeted Interview Probes Card */}
-            {evalResult.narrative && evalResult.narrative.interview_questions && (
-              <InterviewQuestionsCard
-                questions={evalResult.narrative.interview_questions}
-              />
-            )}
-
-            {/* SHAP Feature Importance Attribution */}
-            {evalResult.shap_features && Object.keys(evalResult.shap_features).length > 0 && (
+            {/* Bottom 2-col: SHAP Explainability & Interview Probes */}
+            <div className="results-bottom-grid">
               <ShapVisualizer shapFeatures={evalResult.shap_features} />
-            )}
+
+              {evalResult.narrative && evalResult.narrative.interview_questions && (
+                <InterviewQuestionsCard questions={evalResult.narrative.interview_questions} />
+              )}
+            </div>
           </div>
         )}
 
-        {/* RESULTS SECTION: BATCH CANDIDATE LEADERBOARD */}
+        {/* RESULTS SECTION: BATCH CANDIDATES LEADERBOARD */}
         {mode === 'batch' && batchResults && (
-          <div id="leaderboard-anchor" className="results-container animate-fade-in">
+          <div id="batch-leaderboard-anchor" className="results-container animate-fade-in">
             <LeaderboardTable
               candidates={batchResults}
               blindMode={blindMode}
@@ -401,24 +437,16 @@ export default function App() {
         onClose={() => setRawResumeCandidate(null)}
       />
 
-      {/* Footer */}
+      {/* Clean Footer */}
       <footer className="app-footer">
         <div className="footer-inner">
-          <div className="footer-brand">
-            <span className="brand-title">HireLens<span className="brand-dot">.AI</span></span>
-            <p className="footer-copyright">
-              Enterprise-Grade Explainable Talent Intelligence Platform • Production Ready
-            </p>
-            <p className="footer-copyright">
-              Made by Prabhmeet Singh
-            </p>
+          <div className="footer-left">
+            <span className="footer-brand-title">HireLens</span>
+            <span className="footer-separator">•</span>
+            <span className="footer-copyright">Resume screening & match scoring</span>
           </div>
-          <div className="footer-tech-stack">
-            <span className="tech-badge">FastAPI</span>
-            <span className="tech-badge">PyTorch</span>
-            <span className="tech-badge">Sentence-Transformers</span>
-            <span className="tech-badge">SHAP XAI</span>
-            <span className="tech-badge">React</span>
+          <div className="footer-right">
+            <span className="footer-author">Built by Prabhmeet Singh</span>
           </div>
         </div>
       </footer>
