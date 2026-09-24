@@ -32,6 +32,7 @@ export default function App() {
   const [mode, setMode] = useState('single'); // 'single' | 'batch'
   const [blindMode, setBlindMode] = useState(false);
   const [backendStatus, setBackendStatus] = useState(false);
+  const [backendChecked, setBackendChecked] = useState(false);
 
   // Job Description state (prefill with realistic Data Science JD)
   const [jdText, setJdText] = useState(JOB_DESCRIPTION_PRESETS[0].text);
@@ -86,6 +87,8 @@ export default function App() {
       }
     } catch {
       setBackendStatus(false);
+    } finally {
+      setBackendChecked(true);
     }
   };
 
@@ -215,6 +218,7 @@ export default function App() {
         blindMode={blindMode}
         setBlindMode={setBlindMode}
         backendStatus={backendStatus}
+        backendChecked={backendChecked}
       />
 
       {/* Workspace Sub-header */}
@@ -405,6 +409,37 @@ export default function App() {
               {evalResult.narrative && evalResult.narrative.interview_questions && (
                 <InterviewQuestionsCard questions={evalResult.narrative.interview_questions} />
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Analysis-in-progress skeleton (Single mode) */}
+        {mode === 'single' && loading && !evalResult && (
+          <div className="results-container animate-fade-in">
+            <div className="glass-panel skeleton-results">
+              <div className="skeleton-score-row">
+                <div className="skeleton skeleton-circle" />
+                <div>
+                  <div className="skeleton skeleton-line skeleton-line-md" />
+                  <div className="skeleton skeleton-line skeleton-line-lg" />
+                  <div className="skeleton skeleton-line skeleton-line-sm" />
+                </div>
+              </div>
+            </div>
+            <div className="glass-panel skeleton-results">
+              <div className="skeleton skeleton-line skeleton-line-sm" />
+              <div className="skeleton skeleton-line skeleton-line-lg" />
+              <div className="skeleton skeleton-line skeleton-line-lg" />
+              <div className="skeleton skeleton-line skeleton-line-md" />
+            </div>
+            <div className="glass-panel skeleton-results">
+              <div className="skeleton skeleton-line skeleton-line-sm" />
+              <div className="skeleton-chips-row">
+                <div className="skeleton skeleton-chip" />
+                <div className="skeleton skeleton-chip" />
+                <div className="skeleton skeleton-chip" />
+                <div className="skeleton skeleton-chip" />
+              </div>
             </div>
           </div>
         )}

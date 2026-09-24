@@ -1,5 +1,5 @@
 import React from 'react';
-import { Target, Users, UserCheck, ShieldCheck, EyeOff, CheckCircle2 } from 'lucide-react';
+import { Target, Users, UserCheck, ShieldCheck, EyeOff, CheckCircle2, Loader2, XCircle } from 'lucide-react';
 
 export default function Navbar({
   mode,
@@ -7,6 +7,7 @@ export default function Navbar({
   blindMode,
   setBlindMode,
   backendStatus,
+  backendChecked,
 }) {
   return (
     <header className="navbar-container">
@@ -70,6 +71,25 @@ export default function Navbar({
             </div>
           </div>
 
+          {/* Engine / Server Status */}
+          <div className="server-status-pill" title={!backendChecked ? 'Connecting to the engine...' : backendStatus ? 'Engine ready' : 'Engine unreachable'}>
+            {!backendChecked ? (
+              <>
+                <span className="status-dot status-dot-connecting" />
+                <span className="status-label">Connecting...</span>
+              </>
+            ) : backendStatus ? (
+              <>
+                <span className="status-dot status-dot-online" />
+                <span className="status-label">Engine Ready</span>
+              </>
+            ) : (
+              <>
+                <span className="status-dot status-dot-offline" />
+                <span className="status-label">Engine Offline</span>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </header>
