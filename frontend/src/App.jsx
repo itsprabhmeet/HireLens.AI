@@ -34,6 +34,26 @@ export default function App() {
   const [backendStatus, setBackendStatus] = useState(false);
   const [backendChecked, setBackendChecked] = useState(false);
 
+  // Theme (light/dark) — initial value is set synchronously in index.html to avoid a flash
+  const [theme, setTheme] = useState(() => {
+    if (typeof document !== 'undefined') {
+      const current = document.documentElement.getAttribute('data-theme');
+      if (current === 'light' || current === 'dark') return current;
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('hirelens-theme', theme);
+    } catch {
+      // ignore
+    }
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
+
   // Job Description state (prefill with realistic Data Science JD)
   const [jdText, setJdText] = useState(JOB_DESCRIPTION_PRESETS[0].text);
 
@@ -233,6 +253,8 @@ export default function App() {
         setBlindMode={setBlindMode}
         backendStatus={backendStatus}
         backendChecked={backendChecked}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Workspace Sub-header */}

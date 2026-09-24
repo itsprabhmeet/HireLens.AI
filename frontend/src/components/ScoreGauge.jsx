@@ -16,16 +16,16 @@ export default function ScoreGauge({
   // Determine score tier & colors
   let tierLabel = 'Low Match';
   let tierPillClass = 'pill-danger';
-  let strokeColor = '#9c3b34';
+  let strokeClass = 'gauge-progress-danger';
 
   if (score >= 75) {
     tierLabel = 'Strong Match';
     tierPillClass = 'pill-success';
-    strokeColor = '#2f6b3f';
+    strokeClass = 'gauge-progress-success';
   } else if (score >= 50) {
     tierLabel = 'Potential Match';
     tierPillClass = 'pill-warning';
-    strokeColor = '#9a6412';
+    strokeClass = 'gauge-progress-warning';
   }
 
   // Normalize subscore percentages (handles both 0-1 ratio and already scaled 0-100 values)
@@ -64,7 +64,7 @@ export default function ScoreGauge({
 
             {/* Value Progress Ring */}
             <circle
-              className="gauge-progress"
+              className={`gauge-progress ${strokeClass}`}
               cx="100"
               cy="100"
               r={radius}
@@ -74,7 +74,6 @@ export default function ScoreGauge({
               strokeDashoffset={strokeDashoffset}
               strokeLinecap="round"
               transform="rotate(-90 100 100)"
-              stroke={strokeColor}
             />
           </svg>
 

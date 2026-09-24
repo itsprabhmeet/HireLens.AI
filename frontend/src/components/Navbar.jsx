@@ -1,5 +1,4 @@
-import React from 'react';
-import { Target, Users, UserCheck, ShieldCheck, EyeOff, CheckCircle2, Loader2, XCircle } from 'lucide-react';
+import { Target, Users, UserCheck, ShieldCheck, EyeOff, CheckCircle2, Loader2, XCircle, Sun, Moon } from 'lucide-react';
 
 export default function Navbar({
   mode,
@@ -8,6 +7,8 @@ export default function Navbar({
   setBlindMode,
   backendStatus,
   backendChecked,
+  theme,
+  onToggleTheme,
 }) {
   return (
     <header className="navbar-container">
@@ -90,6 +91,18 @@ export default function Navbar({
               </>
             )}
           </div>
+
+          {/* Theme Toggle */}
+          <button
+            type="button"
+            className="theme-toggle-btn"
+            onClick={onToggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            id="toggle-theme"
+          >
+            {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+          </button>
         </div>
       </div>
     </header>
