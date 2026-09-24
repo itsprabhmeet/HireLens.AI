@@ -209,6 +209,20 @@ export default function App() {
   const hasBatchInput = batchFiles.length > 0;
   const isReadyToRun = mode === 'single' ? hasSingleInput : hasBatchInput;
 
+  if (!backendChecked) {
+    return (
+      <div className="engine-boot-screen">
+        <div className="engine-boot-icon-wrapper">
+          <Loader2 size={28} className="engine-boot-spinner" color="#ffffff" />
+        </div>
+        <div className="engine-boot-title">Waking up the engine...</div>
+        <div className="engine-boot-subtitle">
+          The AI models are loading. This can take up to a minute if the server has been idle.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-layout">
       {/* Top Navigation */}
