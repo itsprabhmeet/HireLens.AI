@@ -74,3 +74,5 @@ watchdog==6.0.0
 watchfiles==1.2.0
 websockets==16.1.1
 wordcloud==1.9.6
+sentence-transformers==3.3.1
+torch==2.5.1
