@@ -91,6 +91,7 @@ export default function ScoreGauge({
             <span className="pred-label">ML Predicted Role:</span>
             <span className="pill pill-brand pred-category-pill">
               <Brain size={13} /> {predictedCategory}
+              {confidence > 0 && <span className="pred-confidence"> ({confidence}%)</span>}
             </span>
           </div>
         )}

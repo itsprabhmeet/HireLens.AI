@@ -1,4 +1,4 @@
-import { Target, Users, UserCheck, ShieldCheck, EyeOff, CheckCircle2, Loader2, XCircle, Sun, Moon } from 'lucide-react';
+import { Target, Users, UserCheck, ShieldCheck, EyeOff, Sun, Moon } from 'lucide-react';
 
 export default function Navbar({
   mode,

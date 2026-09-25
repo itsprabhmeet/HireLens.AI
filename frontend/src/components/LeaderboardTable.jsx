@@ -98,7 +98,10 @@ export default function LeaderboardTable({
       <div className="section-header leaderboard-header">
         <div className="section-title-group">
           <div>
-            <h2 className="section-title">Ranking</h2>
+            <div className="section-title-row">
+              <h2 className="section-title">Ranking</h2>
+              {blindMode && <span className="pill pill-brand">Blind Screening Active</span>}
+            </div>
             <p className="section-subtitle">
               Candidates ranked against the job description
             </p>

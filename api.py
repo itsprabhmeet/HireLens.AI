@@ -15,10 +15,14 @@ import joblib
 from fastapi import FastAPI, File, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 import requests
 
-load_dotenv()
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
 
 # Add workspace and src to path
@@ -386,6 +390,7 @@ async def screen_batch_resumes(
     return {
         "total_screened": len(evaluations),
         "candidates": evaluations,
+        "leaderboard": evaluations,
     }
 
 

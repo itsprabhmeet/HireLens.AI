@@ -25,7 +25,11 @@ import re
 from urllib.parse import urlparse
 
 import requests
-from bs4 import BeautifulSoup
+
+try:
+    from bs4 import BeautifulSoup
+except ImportError:
+    BeautifulSoup = None
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -129,6 +133,14 @@ def fetch_job_description_from_url(url: str) -> dict:
 
     if not url.startswith(("http://", "https://")):
         url = "https://" + url
+
+    if BeautifulSoup is None:
+        return {
+            "success": False,
+            "text": "",
+            "message": "The 'beautifulsoup4' package is not installed. Please paste the job description text directly.",
+            "source": None,
+        }
 
     blocked_reason = _is_known_blocked(url)
     if blocked_reason:

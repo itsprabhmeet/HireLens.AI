@@ -40,7 +40,7 @@ export default function JobDescriptionSection({ jdText, setJdText }) {
       } else {
         setFetchMessage({ type: 'error', text: data.message || 'Could not parse job description from URL.' });
       }
-    } catch (err) {
+    } catch {
       setFetchMessage({
         type: 'error',
         text: 'Connection failed. Please paste the job description directly.',

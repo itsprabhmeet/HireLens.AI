@@ -35,7 +35,7 @@ export default function LearningRecommendations({ skillGaps = {}, jobRole = '' }
       } else {
         setError('No tutorials found for this skill right now.');
       }
-    } catch (err) {
+    } catch {
       setError('Could not load tutorials -- check your connection and try again.');
     } finally {
       setLoading(false);

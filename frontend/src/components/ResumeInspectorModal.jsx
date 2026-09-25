@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Copy, Check, Search } from 'lucide-react';
 
 export default function ResumeInspectorModal({
