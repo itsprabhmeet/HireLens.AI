@@ -1,14 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  ArrowRight,
   AlertTriangle,
   Loader2,
   CheckCircle2,
-  RefreshCw,
   Zap,
   BarChart2,
   Shield,
-  Layers,
   FileCheck,
 } from 'lucide-react';
 
@@ -24,8 +21,15 @@ import InterviewQuestionsCard from './components/InterviewQuestionsCard';
 import LeaderboardTable from './components/LeaderboardTable';
 import CandidateDrawer from './components/CandidateDrawer';
 import ResumeInspectorModal from './components/ResumeInspectorModal';
+import EvaluationLoader from './components/EvaluationLoader';
 
 import { JOB_DESCRIPTION_PRESETS } from './presets';
+
+const SINGLE_STAGES = [
+  'Reading resume and identifying skills...',
+  'Comparing against the job description...',
+  'Putting together the summary...',
+];
 
 export default function App() {
   // Navigation & Settings
@@ -33,6 +37,26 @@ export default function App() {
   const [blindMode, setBlindMode] = useState(false);
   const [backendStatus, setBackendStatus] = useState(false);
   const [backendChecked, setBackendChecked] = useState(false);
+
+  // Theme (light/dark) — initial value is set synchronously in index.html to avoid a flash
+  const [theme, setTheme] = useState(() => {
+    if (typeof document !== 'undefined') {
+      const current = document.documentElement.getAttribute('data-theme');
+      if (current === 'light' || current === 'dark') return current;
+    }
+    return 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    try {
+      localStorage.setItem('hirelens-theme', theme);
+    } catch {
+      // ignore
+    }
+  }, [theme]);
+
+  const toggleTheme = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'));
 
   // Job Description state (prefill with realistic Data Science JD)
   const [jdText, setJdText] = useState(JOB_DESCRIPTION_PRESETS[0].text);
@@ -57,43 +81,30 @@ export default function App() {
 
   // Check backend health on mount
   useEffect(() => {
+    let active = true;
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/status');
+        if (res.ok) {
+          const data = await res.json();
+          if (active) setBackendStatus(data.status === 'ready');
+        } else {
+          if (active) setBackendStatus(false);
+        }
+      } catch {
+        if (active) setBackendStatus(false);
+      } finally {
+        if (active) setBackendChecked(true);
+      }
+    }
     checkHealth();
+    return () => {
+      active = false;
+    };
   }, []);
 
-  // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to run screening
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        e.preventDefault();
-        if (mode === 'single') {
-          handleScreenSingle();
-        } else {
-          handleScreenBatch();
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, jdText, resumeFile, resumeText, batchFiles, blindMode, loading]);
-
-  const checkHealth = async () => {
-    try {
-      const res = await fetch('/api/status');
-      if (res.ok) {
-        const data = await res.json();
-        setBackendStatus(data.status === 'ready');
-      } else {
-        setBackendStatus(false);
-      }
-    } catch {
-      setBackendStatus(false);
-    } finally {
-      setBackendChecked(true);
-    }
-  };
-
   // Single resume evaluation
-  const handleScreenSingle = async () => {
+  const handleScreenSingle = useCallback(async () => {
     if (loading) return;
     if (!jdText.trim()) {
       setError('Please provide a job description before evaluating.');
@@ -106,14 +117,14 @@ export default function App() {
 
     setError(null);
     setLoading(true);
-    setLoadingStage('Reading resume and identifying skills...');
+    setLoadingStage(SINGLE_STAGES[0]);
 
     const stageTimer1 = setTimeout(() => {
-      setLoadingStage('Comparing against the job description...');
+      setLoadingStage(SINGLE_STAGES[1]);
     }, 1100);
 
     const stageTimer2 = setTimeout(() => {
-      setLoadingStage('Putting together the summary...');
+      setLoadingStage(SINGLE_STAGES[2]);
     }, 2200);
 
     try {
@@ -153,10 +164,10 @@ export default function App() {
       setLoading(false);
       setLoadingStage('');
     }
-  };
+  }, [loading, jdText, resumeFile, resumeText, blindMode]);
 
   // Batch resumes evaluation
-  const handleScreenBatch = async () => {
+  const handleScreenBatch = useCallback(async () => {
     if (loading) return;
     if (!jdText.trim()) {
       setError('Please provide a target job description before batch screening.');
@@ -191,7 +202,7 @@ export default function App() {
       }
 
       const data = await response.json();
-      setBatchResults(data.leaderboard);
+      setBatchResults(data.candidates || data.leaderboard || []);
 
       setTimeout(() => {
         const el = document.getElementById('batch-leaderboard-anchor');
@@ -203,7 +214,23 @@ export default function App() {
       setLoading(false);
       setLoadingStage('');
     }
-  };
+  }, [loading, jdText, batchFiles, blindMode]);
+
+  // Keyboard shortcut: Ctrl+Enter or Cmd+Enter to run screening
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (mode === 'single') {
+          handleScreenSingle();
+        } else {
+          handleScreenBatch();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mode, handleScreenSingle, handleScreenBatch]);
 
   const hasSingleInput = Boolean(resumeFile || resumeText.trim());
   const hasBatchInput = batchFiles.length > 0;
@@ -233,6 +260,8 @@ export default function App() {
         setBlindMode={setBlindMode}
         backendStatus={backendStatus}
         backendChecked={backendChecked}
+        theme={theme}
+        onToggleTheme={toggleTheme}
       />
 
       {/* Workspace Sub-header */}
@@ -484,6 +513,18 @@ export default function App() {
       <ResumeInspectorModal
         candidate={rawResumeCandidate}
         onClose={() => setRawResumeCandidate(null)}
+      />
+
+      <EvaluationLoader
+        open={loading}
+        title={mode === 'single' ? 'Evaluating candidate' : `Ranking ${batchFiles.length} candidates`}
+        subtitle={mode === 'single'
+          ? (resumeFile ? resumeFile.name : 'Pasted resume text')
+          : 'Scoring every resume against the job description'}
+        steps={mode === 'single'
+          ? SINGLE_STAGES.map((s) => s.replace(/\.\.\.$/, ''))
+          : ['Reading resumes', 'Scoring against the job description', 'Building the leaderboard']}
+        activeStep={mode === 'single' ? Math.max(0, SINGLE_STAGES.indexOf(loadingStage)) : 1}
       />
 
       {/* Clean Footer */}

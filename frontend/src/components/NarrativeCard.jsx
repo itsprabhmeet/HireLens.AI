@@ -46,7 +46,10 @@ export default function NarrativeCard({ narrative = {} }) {
           <FileCheck2 size={24} className="text-indigo" />
         </div>
         <div className="verdict-text-col">
-          <span className="verdict-headline">Overall verdict</span>
+          <div className="verdict-title-row">
+            <span className="verdict-headline">Overall verdict</span>
+            {overall_fit && <span className="pill pill-neutral">{overall_fit}</span>}
+          </div>
           <p className="verdict-body">{verdict}</p>
         </div>
       </div>

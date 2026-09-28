@@ -61,10 +61,79 @@
   --shadow-lg: 0 12px 30px rgba(30, 26, 16, 0.10);
   --shadow-dock: 0 2px 12px rgba(30, 26, 16, 0.06);
 
+  /* Ink-tinted overlays (progress tracks, gauge rings, scrollbar) — flip in dark mode */
+  --track-bg: rgba(30, 26, 16, 0.08);
+  --scrollbar-thumb: rgba(30, 26, 16, 0.15);
+  --scrollbar-thumb-hover: rgba(30, 26, 16, 0.25);
+  --scrim: rgba(20, 17, 10, 0.4);
+  --scrim-strong: rgba(20, 17, 10, 0.45);
+
   /* Transitions */
   --transition-fast: 0.15s ease;
   --transition-normal: 0.2s ease;
   --transition-smooth: 0.25s ease;
+
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   Dark Mode — same system, inverted surfaces, brightened accents for contrast
+   ========================================================================== */
+:root[data-theme='dark'] {
+  --bg-canvas: #16150f;
+  --bg-surface: #1d1c15;
+  --bg-surface-elevated: #211f18;
+  --bg-card: #1d1c15;
+  --bg-card-hover: #26241a;
+  --bg-card-active: #2d2b1f;
+  --bg-subtle: #201f18;
+
+  --border-subtle: rgba(243, 241, 232, 0.09);
+  --border-medium: rgba(243, 241, 232, 0.16);
+  --border-focus: rgba(111, 184, 141, 0.5);
+
+  --accent: #6fb88d;
+  --accent-hover: #85c8a0;
+  --accent-soft-bg: rgba(111, 184, 141, 0.14);
+  --accent-soft-border: rgba(111, 184, 141, 0.34);
+
+  --accent-secondary: #d68f5f;
+  --accent-secondary-soft-bg: rgba(214, 143, 95, 0.14);
+  --accent-secondary-soft-border: rgba(214, 143, 95, 0.32);
+
+  --color-teal: #74b0b8;
+  --color-teal-soft-bg: rgba(116, 176, 184, 0.14);
+  --color-teal-soft-border: rgba(116, 176, 184, 0.32);
+
+  --color-success: #6fb88d;
+  --color-success-bg: rgba(111, 184, 141, 0.14);
+  --color-success-border: rgba(111, 184, 141, 0.32);
+
+  --color-warning: #d9a94f;
+  --color-warning-bg: rgba(217, 169, 79, 0.14);
+  --color-warning-border: rgba(217, 169, 79, 0.32);
+
+  --color-danger: #d98077;
+  --color-danger-bg: rgba(217, 128, 119, 0.14);
+  --color-danger-border: rgba(217, 128, 119, 0.32);
+
+  --text-primary: #f2efe4;
+  --text-secondary: #b9b3a0;
+  --text-muted: #837e6c;
+  --text-faint: #56513f;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-dock: 0 2px 14px rgba(0, 0, 0, 0.32);
+
+  --track-bg: rgba(243, 241, 232, 0.09);
+  --scrollbar-thumb: rgba(243, 241, 232, 0.14);
+  --scrollbar-thumb-hover: rgba(243, 241, 232, 0.22);
+  --scrim: rgba(0, 0, 0, 0.5);
+  --scrim-strong: rgba(0, 0, 0, 0.6);
+
+  color-scheme: dark;
 }
 
 /* Reset & Global Base */
@@ -83,6 +152,7 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   overflow-x: hidden;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 #root {
@@ -519,6 +589,28 @@ textarea::placeholder, input[type="text"]::placeholder {
 
 .switch-on .switch-thumb {
   transform: translateX(12px);
+}
+
+/* Theme Toggle */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.theme-toggle-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+  background: var(--bg-card-hover);
 }
 
 /* Server status pill */
@@ -1358,12 +1450,16 @@ textarea::placeholder, input[type="text"]::placeholder {
 }
 
 .gauge-track {
-  stroke: rgba(30, 26, 16, 0.08);
+  stroke: var(--track-bg);
 }
 
 .gauge-progress {
-  transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.2s ease;
 }
+
+.gauge-progress-success { stroke: var(--color-success); }
+.gauge-progress-warning { stroke: var(--color-warning); }
+.gauge-progress-danger { stroke: var(--color-danger); }
 
 .gauge-center-content {
   position: absolute;
@@ -1492,7 +1588,7 @@ textarea::placeholder, input[type="text"]::placeholder {
 
 .subscore-progress-bar {
   height: 6px;
-  background: rgba(30, 26, 16, 0.08);
+  background: var(--track-bg);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -1749,7 +1845,7 @@ textarea::placeholder, input[type="text"]::placeholder {
 
 .coverage-bar {
   height: 7px;
-  background: rgba(30, 26, 16, 0.08);
+  background: var(--track-bg);
   border-radius: 4px;
   overflow: hidden;
 }
@@ -1806,7 +1902,7 @@ textarea::placeholder, input[type="text"]::placeholder {
 
 .category-progress-track {
   height: 4px;
-  background: rgba(30, 26, 16, 0.08);
+  background: var(--track-bg);
   border-radius: 2px;
   overflow: hidden;
 }
@@ -2217,7 +2313,7 @@ textarea::placeholder, input[type="text"]::placeholder {
 
 .score-mini-bar {
   height: 5px;
-  background: rgba(30, 26, 16, 0.08);
+  background: var(--track-bg);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -2272,7 +2368,7 @@ textarea::placeholder, input[type="text"]::placeholder {
 .drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(20, 17, 10, 0.4);
+  background: var(--scrim);
   z-index: 200;
   display: flex;
   justify-content: flex-end;
@@ -2376,7 +2472,7 @@ textarea::placeholder, input[type="text"]::placeholder {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(20, 17, 10, 0.45);
+  background: var(--scrim-strong);
   z-index: 300;
   display: flex;
   align-items: center;
@@ -2529,12 +2625,12 @@ textarea::placeholder, input[type="text"]::placeholder {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(30, 26, 16, 0.15);
+  background: var(--scrollbar-thumb);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(30, 26, 16, 0.25);
+  background: var(--scrollbar-thumb-hover);
 }
 
 /* ==========================================================================
@@ -2649,4 +2745,242 @@ textarea::placeholder, input[type="text"]::placeholder {
 
 .workspace-header-right {
   justify-content: center;
+/* ==========================================================================
+   Evaluation Loader — modal shown while a screening request is running
+   ========================================================================== */
+.eval-loader-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--scrim-strong);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: evalLoaderFade 0.2s ease both;
+}
+
+.eval-loader-card {
+  width: 100%;
+  max-width: 400px;
+  padding: 36px 32px 28px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: evalLoaderRise 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Animated emblem: pulsing rings + orbiting dot around a scanned document */
+.eval-loader-visual {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.eval-loader-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid var(--accent-soft-border);
+  animation: evalLoaderPulse 2.4s ease-out infinite;
+}
+
+.eval-loader-ring-inner {
+  animation-delay: 1.2s;
+}
+
+.eval-loader-orbit {
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  border: 2px solid var(--track-bg);
+  border-top-color: var(--accent);
+  animation: evalLoaderSpin 1.1s linear infinite;
+}
+
+.eval-loader-orbit-dot {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px var(--accent);
+}
+
+.eval-loader-doc {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: var(--accent-soft-bg);
+  border: 1px solid var(--accent-soft-border);
+  color: var(--accent);
+  overflow: hidden;
+}
+
+.eval-loader-scanline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 18px;
+  background: linear-gradient(180deg, transparent, var(--accent-soft-border), transparent);
+  border-bottom: 1.5px solid var(--accent);
+  animation: evalLoaderScan 1.6s ease-in-out infinite;
+}
+
+.eval-loader-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.eval-loader-subtitle {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Step checklist */
+.eval-loader-steps {
+  list-style: none;
+  margin: 24px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+}
+
+.eval-loader-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.875rem;
+  color: var(--text-faint);
+  transition: color var(--transition-normal);
+}
+
+.eval-loader-step-marker {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-medium);
+  transition: all var(--transition-normal);
+}
+
+.eval-loader-step-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+}
+
+.eval-loader-step-active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.eval-loader-step-active .eval-loader-step-marker {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft-bg);
+}
+
+.eval-loader-step-active .eval-loader-step-dot {
+  opacity: 1;
+  animation: evalLoaderBlink 1s ease-in-out infinite;
+}
+
+.eval-loader-step-done {
+  color: var(--text-secondary);
+}
+
+.eval-loader-step-done .eval-loader-step-marker {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg-surface);
+  animation: evalLoaderPop 0.3s ease both;
+}
+
+/* Indeterminate progress bar */
+.eval-loader-progress {
+  position: relative;
+  height: 3px;
+  margin-top: 24px;
+  border-radius: 3px;
+  background: var(--track-bg);
+  overflow: hidden;
+}
+
+.eval-loader-progress-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: 3px;
+  background: var(--accent);
+  animation: evalLoaderSlide 1.4s ease-in-out infinite;
+}
+
+@keyframes evalLoaderFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes evalLoaderRise {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes evalLoaderSpin { to { transform: rotate(360deg); } }
+@keyframes evalLoaderPulse {
+  0% { transform: scale(0.7); opacity: 0.9; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+@keyframes evalLoaderScan {
+  0% { top: -18px; }
+  100% { top: 60px; }
+}
+@keyframes evalLoaderBlink { 50% { opacity: 0.3; } }
+@keyframes evalLoaderPop {
+  0% { transform: scale(0.6); }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes evalLoaderSlide {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eval-loader-backdrop *,
+  .eval-loader-backdrop {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .eval-loader-card {
+    padding: 28px 20px 22px;
+  }
 }

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, FileText, ExternalLink, ShieldCheck, Sparkles } from 'lucide-react';
+import { X, FileText, ExternalLink, ShieldCheck } from 'lucide-react';
 import ScoreGauge from './ScoreGauge';
 import NarrativeCard from './NarrativeCard';
 import SkillsMatrix from './SkillsMatrix';
