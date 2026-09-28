@@ -456,37 +456,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Analysis-in-progress skeleton (Single mode) */}
-        {mode === 'single' && loading && !evalResult && (
-          <div className="results-container animate-fade-in">
-            <div className="glass-panel skeleton-results">
-              <div className="skeleton-score-row">
-                <div className="skeleton skeleton-circle" />
-                <div>
-                  <div className="skeleton skeleton-line skeleton-line-md" />
-                  <div className="skeleton skeleton-line skeleton-line-lg" />
-                  <div className="skeleton skeleton-line skeleton-line-sm" />
-                </div>
-              </div>
-            </div>
-            <div className="glass-panel skeleton-results">
-              <div className="skeleton skeleton-line skeleton-line-sm" />
-              <div className="skeleton skeleton-line skeleton-line-lg" />
-              <div className="skeleton skeleton-line skeleton-line-lg" />
-              <div className="skeleton skeleton-line skeleton-line-md" />
-            </div>
-            <div className="glass-panel skeleton-results">
-              <div className="skeleton skeleton-line skeleton-line-sm" />
-              <div className="skeleton-chips-row">
-                <div className="skeleton skeleton-chip" />
-                <div className="skeleton skeleton-chip" />
-                <div className="skeleton skeleton-chip" />
-                <div className="skeleton skeleton-chip" />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* RESULTS SECTION: BATCH CANDIDATES LEADERBOARD */}
         {mode === 'batch' && batchResults && (
           <div id="batch-leaderboard-anchor" className="results-container animate-fade-in">
