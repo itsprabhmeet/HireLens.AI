@@ -2629,3 +2629,24 @@ textarea::placeholder, input[type="text"]::placeholder {
     height: 160px;
   }
 }
+
+
+/* Centered workspace header */
+.workspace-header-inner {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.workspace-header-left {
+  align-items: center;
+  text-align: center;
+}
+
+.workspace-breadcrumb {
+  justify-content: center;
+}
+
+.workspace-header-right {
+  justify-content: center;
+}
